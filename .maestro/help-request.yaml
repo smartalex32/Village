@@ -1,0 +1,11 @@
+appId: com.village.mobile
+---
+- launchApp
+- tapOn: "Ask for Help"
+- assertVisible: "What type of help is needed?"
+- tapOn: "Ask Grandma"
+- tapOn: "Anything they need to know?"
+- inputText: "Meeting is running late."
+- tapOn: "Ask My Village"
+- assertVisible: "Help Request Sent"
+- assertVisible: "Notified"

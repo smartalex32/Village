@@ -1,0 +1,9 @@
+appId: com.village.mobile
+---
+- launchApp
+- tapOn: "Grandma → Alex"
+- assertVisible: "Items to bring"
+- tapOn: "Water bottle"
+- tapOn: "Mark as Ready"
+- tapOn: "I've Received Emma"
+- assertVisible: "Handoff acknowledged"
