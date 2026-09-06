@@ -4,6 +4,8 @@ Village is a private mobile app for coordinating childcare responsibilities, hel
 
 New to Supabase or mobile-app distribution? Follow the complete [first-time backend and release setup guide](docs/SETUP_GUIDE.md).
 
+Using the app? See the illustrated [Village user guide](docs/user-guide/USER_GUIDE.md).
+
 ## Run locally
 
 1. Install dependencies with `npm install`.
