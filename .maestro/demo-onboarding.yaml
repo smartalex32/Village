@@ -1,0 +1,19 @@
+appId: com.village.mobile
+---
+- launchApp:
+    clearState: true
+- assertVisible: "Village"
+- tapOn: "Get Started"
+- tapOn: "you@example.com"
+- inputText: "alex@example.test"
+- tapOn: "At least 8 characters"
+- inputText: "village-demo"
+- tapOn: "Create Account"
+- assertVisible: "Who’s in your household?"
+- tapOn: "The Alexander Family"
+- inputText: "The Test Family"
+- tapOn: "Emma"
+- inputText: "Mia"
+- tapOn: "Create My Village"
+- assertVisible: "Today"
+- assertVisible: "Needs attention"
