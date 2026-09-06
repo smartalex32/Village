@@ -2,6 +2,8 @@
 
 Village is a private mobile app for coordinating childcare responsibilities, help requests, and caregiver handoffs. It is built with Expo/React Native and Supabase.
 
+New to Supabase or mobile-app distribution? Follow the complete [first-time backend and release setup guide](docs/SETUP_GUIDE.md).
+
 ## Run locally
 
 1. Install dependencies with `npm install`.

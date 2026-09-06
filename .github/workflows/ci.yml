@@ -33,5 +33,6 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-      - run: deno lint supabase/functions
-      - run: deno test supabase/functions
+      - run: deno lint --config supabase/functions/deno.json supabase/functions
+      - run: deno check --config supabase/functions/deno.json supabase/functions/send-invitation/index.ts supabase/functions/deliver-notifications/index.ts
+      - run: deno test --config supabase/functions/deno.json supabase/functions
