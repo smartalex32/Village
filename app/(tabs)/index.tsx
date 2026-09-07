@@ -111,14 +111,8 @@ export default function TodayScreen() {
             )?.displayName;
 
             return (
-              <Card
-                key={child.id}
-                style={[
-                  styles.childCard,
-                  activeChildren.length === 1 && styles.singleChildCard,
-                ]}
-              >
-                <View style={styles.childIdentity}>
+              <Card key={child.id} style={styles.childCard}>
+                <View style={styles.childSummary}>
                   <Avatar
                     name={child.firstName}
                     uri={child.avatarUrl}
@@ -130,23 +124,23 @@ export default function TodayScreen() {
                       {child.firstName}
                     </Text>
                     <Text style={styles.currentLabel}>Currently with</Text>
+                    <Text style={styles.caregiver} numberOfLines={1}>
+                      {caregiver?.displayName ?? "Not acknowledged"}
+                    </Text>
                   </View>
+                  <Pill
+                    label={
+                      caregiver?.id === data.currentMemberId
+                        ? "With you"
+                        : caregiver
+                          ? "Coordinated"
+                          : "No receipt"
+                    }
+                    tone={
+                      caregiver?.id === data.currentMemberId ? "blue" : "green"
+                    }
+                  />
                 </View>
-                <Text style={styles.caregiver} numberOfLines={1}>
-                  {caregiver?.displayName ?? "Not acknowledged"}
-                </Text>
-                <Pill
-                  label={
-                    caregiver?.id === data.currentMemberId
-                      ? "With you"
-                      : caregiver
-                        ? "Coordinated"
-                        : "No receipt"
-                  }
-                  tone={
-                    caregiver?.id === data.currentMemberId ? "blue" : "green"
-                  }
-                />
                 {handoff ? (
                   <Pressable
                     accessibilityRole="button"
@@ -178,9 +172,7 @@ export default function TodayScreen() {
                       </Text>
                     </View>
                   </Pressable>
-                ) : (
-                  <Text style={styles.noHandoff}>No handoff scheduled</Text>
-                )}
+                ) : null}
               </Card>
             );
           })}
@@ -402,16 +394,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.danger,
   },
   badgeText: { color: "#fff", fontSize: 10, fontWeight: "800" },
-  childrenGrid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
-  childCard: {
-    flexGrow: 1,
-    flexBasis: "47%",
-    minWidth: 150,
-    padding: 12,
-    gap: 6,
-  },
-  singleChildCard: { flexBasis: "100%" },
-  childIdentity: { flexDirection: "row", alignItems: "center", gap: 8 },
+  childrenGrid: { gap: spacing.sm },
+  childCard: { padding: 12, gap: 8 },
+  childSummary: { flexDirection: "row", alignItems: "center", gap: 10 },
   childName: { color: colors.ink, fontSize: 17, fontWeight: "800" },
   currentLabel: { color: colors.muted, fontSize: 11 },
   caregiver: { color: colors.ink, fontSize: 15, fontWeight: "700" },
@@ -431,7 +416,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   nextHandoffPeople: { color: colors.muted, fontSize: 10, marginTop: 1 },
-  noHandoff: { color: colors.muted, fontSize: 11, marginTop: 8 },
   scheduleCard: {
     minHeight: 72,
     padding: 12,
