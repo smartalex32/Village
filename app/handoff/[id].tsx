@@ -22,8 +22,7 @@ export default function HandoffDetailScreen() {
   if (!handoff)
     return (
       <Screen>
-        <AppHeader title="Handoff unavailable" />
-        <Button label="Back" onPress={() => router.back()} />
+        <AppHeader title="Handoff unavailable" onBack={() => router.back()} />
       </Screen>
     );
   const child = data.children.find((item) => item.id === handoff.childId);
@@ -39,6 +38,7 @@ export default function HandoffDetailScreen() {
     <Screen scroll={false} style={styles.screen}>
       <AppHeader
         title="Handoff"
+        onBack={() => router.back()}
         right={
           <Pill
             label={
@@ -168,7 +168,6 @@ export default function HandoffDetailScreen() {
           )}
         </View>
       )}
-      <Button label="Back" variant="secondary" onPress={() => router.back()} />
     </Screen>
   );
 }

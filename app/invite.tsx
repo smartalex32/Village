@@ -99,6 +99,7 @@ export default function InviteScreen() {
       <AppHeader
         title={params.resend ? "Resend Invitation" : "Invite Someone"}
         subtitle="Only invite people you trust with your child’s care."
+        onBack={() => router.back()}
       />
       <Card style={styles.form}>
         <View style={styles.fieldRow}>
@@ -255,9 +256,7 @@ export default function InviteScreen() {
           variant="secondary"
           onPress={() => router.back()}
         />
-      ) : (
-        <Button label="Cancel" variant="ghost" onPress={() => router.back()} />
-      )}
+      ) : null}
     </Screen>
   );
 }

@@ -18,6 +18,7 @@ export default function SignUpScreen() {
       <AppHeader
         title="Create your Village"
         subtitle="Private, invitation-only childcare coordination."
+        onBack={() => router.back()}
       />
       <Card style={styles.form}>
         {sent ? (

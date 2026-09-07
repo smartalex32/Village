@@ -48,6 +48,7 @@ export default function EventFormScreen() {
             ? "Update this care responsibility."
             : "Schedule a childcare responsibility."
         }
+        onBack={() => router.back()}
       />
       <Text style={styles.label}>Child</Text>
       <ScrollView
@@ -140,22 +141,11 @@ export default function EventFormScreen() {
             </Pressable>
           ))}
       </ScrollView>
-      <View style={styles.actions}>
-        <View style={styles.actionButton}>
-          <Button
-            label={existing ? "Save Changes" : "Save Event"}
-            onPress={save}
-            disabled={!title.trim() || !childId}
-          />
-        </View>
-        <View style={styles.actionButton}>
-          <Button
-            label="Cancel"
-            variant="secondary"
-            onPress={() => router.back()}
-          />
-        </View>
-      </View>
+      <Button
+        label={existing ? "Save Changes" : "Save Event"}
+        onPress={save}
+        disabled={!title.trim() || !childId}
+      />
       {existing ? (
         <Button
           label="Cancel Event"
@@ -175,8 +165,6 @@ const styles = StyleSheet.create({
   chips: { gap: spacing.sm, paddingRight: spacing.md },
   fieldRow: { flexDirection: "row", gap: spacing.sm },
   halfField: { flex: 1, minWidth: 0 },
-  actions: { flexDirection: "row", gap: spacing.sm },
-  actionButton: { flex: 1 },
   chip: {
     borderWidth: 1,
     borderColor: colors.line,

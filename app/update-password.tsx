@@ -7,7 +7,7 @@ import { colors } from "@/src/theme/tokens";
 
 export default function UpdatePasswordScreen() {
   const router = useRouter();
-  const { updatePassword } = useAuth();
+  const { updatePassword, user } = useAuth();
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [error, setError] = useState("");
@@ -28,6 +28,7 @@ export default function UpdatePasswordScreen() {
       <AppHeader
         title="Choose a new password"
         subtitle="Use at least eight characters."
+        onBack={() => router.replace(user ? "/(tabs)" : "/sign-in")}
       />
       <Card style={styles.form}>
         <Field

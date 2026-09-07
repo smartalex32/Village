@@ -22,10 +22,9 @@ export default function HelpSentScreen() {
   if (!request)
     return (
       <Screen>
-        <AppHeader title="Request unavailable" />
-        <Button
-          label="Back to Today"
-          onPress={() => router.replace("/(tabs)")}
+        <AppHeader
+          title="Request unavailable"
+          onBack={() => router.replace("/(tabs)")}
         />
       </Screen>
     );
@@ -37,8 +36,17 @@ export default function HelpSentScreen() {
     request.status === "ASSIGNED"
       ? "Covered"
       : request.status.charAt(0) + request.status.slice(1).toLowerCase();
+  const title =
+    request.status === "ASSIGNED"
+      ? "Help Is Covered"
+      : request.status === "COMPLETED"
+        ? "Request Complete"
+        : request.status === "CANCELLED"
+          ? "Request Cancelled"
+          : "Help Request Sent";
   return (
     <Screen style={styles.screen}>
+      <AppHeader title={title} onBack={() => router.replace("/(tabs)")} />
       <View style={styles.success}>
         <MaterialCommunityIcons
           name={
@@ -51,15 +59,6 @@ export default function HelpSentScreen() {
           size={58}
           color={colors.forest}
         />
-        <Text style={styles.title}>
-          {request.status === "ASSIGNED"
-            ? "Help Is Covered"
-            : request.status === "COMPLETED"
-              ? "Request Complete"
-              : request.status === "CANCELLED"
-                ? "Request Cancelled"
-                : "Help Request Sent"}
-        </Text>
         <Text style={styles.subtitle}>
           {assigned
             ? `${assigned.displayName} can help.`
@@ -168,7 +167,6 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingVertical: spacing.lg,
   },
-  title: { color: colors.ink, fontWeight: "900", fontSize: 25 },
   subtitle: {
     color: colors.muted,
     textAlign: "center",

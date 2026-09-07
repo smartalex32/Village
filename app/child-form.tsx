@@ -76,6 +76,7 @@ export default function ChildFormScreen() {
       <AppHeader
         title={existing ? `Edit ${existing.firstName}` : "Add a child"}
         subtitle="Keep the profile lightweight. You can update it later."
+        onBack={() => router.back()}
       />
       <View style={styles.avatar}>
         <Avatar name={firstName || "Child"} uri={avatarUri} size={76} />
@@ -122,7 +123,6 @@ export default function ChildFormScreen() {
         onPress={save}
         disabled={saving || !firstName.trim()}
       />
-      <Button label="Cancel" variant="ghost" onPress={() => router.back()} />
     </Screen>
   );
 }

@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { AppHeader, Button, Card, Screen } from "@/src/components/ui";
+import { AppHeader, Card, Screen } from "@/src/components/ui";
 import { useVillage } from "@/src/providers/VillageProvider";
 import { colors, spacing } from "@/src/theme/tokens";
 
@@ -19,6 +19,7 @@ export default function QuickActionsScreen() {
       <AppHeader
         title="What do you need?"
         subtitle="Create a structured care update."
+        onBack={() => router.back()}
       />
       <View style={styles.actions}>
         {canManage ? (
@@ -87,7 +88,6 @@ export default function QuickActionsScreen() {
           </Pressable>
         ) : null}
       </View>
-      <Button label="Cancel" variant="ghost" onPress={() => router.back()} />
     </Screen>
   );
 }

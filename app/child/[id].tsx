@@ -28,8 +28,7 @@ export default function ChildDetailScreen() {
   if (!child)
     return (
       <Screen>
-        <AppHeader title="Child unavailable" />
-        <Button label="Back" onPress={() => router.back()} />
+        <AppHeader title="Child unavailable" onBack={() => router.back()} />
       </Screen>
     );
   const events = data.events
@@ -44,7 +43,11 @@ export default function ChildDetailScreen() {
   );
   return (
     <Screen>
-      <AppHeader title={child.firstName} subtitle="Child profile" />
+      <AppHeader
+        title={child.firstName}
+        subtitle="Child profile"
+        onBack={() => router.back()}
+      />
       <Card style={styles.profile}>
         <Avatar name={child.firstName} uri={child.avatarUrl} size={72} />
         <View style={styles.flex}>
@@ -128,7 +131,6 @@ export default function ChildDetailScreen() {
           />
         </>
       ) : null}
-      <Button label="Back" variant="ghost" onPress={() => router.back()} />
     </Screen>
   );
 }

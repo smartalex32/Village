@@ -60,38 +60,39 @@ export function AppHeader({
   title,
   subtitle,
   right,
+  onBack,
 }: {
   title: string;
   subtitle?: string;
   right?: ReactNode;
+  onBack?: () => void;
 }) {
   return (
     <View style={styles.header}>
+      {onBack ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+          onPress={onBack}
+          hitSlop={8}
+          style={({ pressed }) => [
+            styles.headerBack,
+            pressed && styles.pressed,
+          ]}
+        >
+          <MaterialCommunityIcons
+            name="arrow-left"
+            size={24}
+            color={colors.forest}
+          />
+        </Pressable>
+      ) : null}
       <View style={styles.flex}>
         <Text style={styles.title}>{title}</Text>
         {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
       </View>
       {right}
     </View>
-  );
-}
-
-export function BackButton({ onPress }: { onPress: () => void }) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel="Back"
-      onPress={onPress}
-      hitSlop={8}
-      style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
-    >
-      <MaterialCommunityIcons
-        name="arrow-left"
-        size={22}
-        color={colors.forest}
-      />
-      <Text style={styles.backButtonText}>Back</Text>
-    </Pressable>
   );
 }
 
@@ -313,15 +314,13 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     marginBottom: spacing.xs,
   },
-  backButton: {
-    minHeight: 44,
-    alignSelf: "flex-start",
-    flexDirection: "row",
+  headerBack: {
+    width: 44,
+    height: 44,
     alignItems: "center",
-    gap: 4,
-    paddingRight: spacing.sm,
+    justifyContent: "center",
+    marginLeft: -10,
   },
-  backButtonText: { color: colors.forest, fontSize: 16, fontWeight: "700" },
   title: {
     color: colors.ink,
     fontSize: 30,

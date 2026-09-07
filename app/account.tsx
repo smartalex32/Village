@@ -29,7 +29,11 @@ export default function AccountScreen() {
 
   return (
     <Screen scroll={false} style={styles.screen}>
-      <AppHeader title="Account" subtitle="Your Village profile and session." />
+      <AppHeader
+        title="Account"
+        subtitle="Your Village profile and session."
+        onBack={() => router.back()}
+      />
       <Card style={styles.profile}>
         <Avatar
           name={member?.displayName ?? auth.user?.email ?? "Account"}
@@ -64,7 +68,6 @@ export default function AccountScreen() {
           router.replace("/");
         }}
       />
-      <Button label="Back" variant="secondary" onPress={() => router.back()} />
     </Screen>
   );
 }

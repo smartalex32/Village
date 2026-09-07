@@ -49,6 +49,7 @@ export default function NotificationsScreen() {
       <AppHeader
         title="Notifications"
         subtitle="Important coordination updates."
+        onBack={() => router.back()}
       />
       {data.notifications.length ? (
         data.notifications.map((item) => (
@@ -96,7 +97,6 @@ export default function NotificationsScreen() {
           />
         </Card>
       ) : null}
-      <Button label="Back" variant="secondary" onPress={() => router.back()} />
     </Screen>
   );
 }

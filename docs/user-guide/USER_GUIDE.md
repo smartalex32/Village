@@ -52,6 +52,7 @@ The bottom navigation is available throughout the main app:
 | **Family**   | Child profiles, care notes, and upcoming schedules                      |
 
 Tap the center **+** button when you need to act quickly.
+On forms and detail screens, tap the back arrow beside the page title to return without completing an action.
 
 ![Quick actions menu](images/10-quick-actions.png)
 
@@ -153,7 +154,7 @@ Use a structured help request when an event needs a caregiver.
 5. Add an optional care note.
 6. Tap **Ask My Village** and confirm the summary.
 
-Tap **Cancel** to return without sending a request.
+Tap the back arrow beside **Ask for Help** to return without sending a request.
 
 ![Ask for Help screen](images/09-help-request.png)
 

@@ -65,6 +65,7 @@ export default function HelpRequestScreen() {
       <AppHeader
         title="Ask for Help"
         subtitle="Send a request to your village."
+        onBack={() => router.back()}
       />
       <Text style={styles.label}>What type of help is needed?</Text>
       <View style={styles.helpTypes}>
@@ -174,22 +175,11 @@ export default function HelpRequestScreen() {
         placeholder="Anything they need to know?"
         style={styles.notes}
       />
-      <View style={styles.actions}>
-        <View style={styles.actionButton}>
-          <Button
-            label="Ask My Village"
-            onPress={submit}
-            disabled={!childId || !location.trim() || !recipientIds.length}
-          />
-        </View>
-        <View style={styles.actionButton}>
-          <Button
-            label="Cancel"
-            variant="secondary"
-            onPress={() => router.back()}
-          />
-        </View>
-      </View>
+      <Button
+        label="Ask My Village"
+        onPress={submit}
+        disabled={!childId || !location.trim() || !recipientIds.length}
+      />
     </Screen>
   );
 }
@@ -246,6 +236,4 @@ const styles = StyleSheet.create({
   check: { color: colors.forest, fontWeight: "900", fontSize: 18 },
   empty: { color: colors.muted, fontStyle: "italic" },
   notes: { minHeight: 62 },
-  actions: { flexDirection: "row", gap: spacing.sm },
-  actionButton: { flex: 1 },
 });

@@ -80,6 +80,7 @@ export default function HandoffFormScreen() {
       <AppHeader
         title="Create Handoff"
         subtitle="Prepare the details the next caregiver needs."
+        onBack={() => router.back()}
       />
       <ChoiceRow
         label="Child"
@@ -161,22 +162,11 @@ export default function HandoffFormScreen() {
           }
         />
       ) : null}
-      <View style={styles.actions}>
-        <View style={styles.actionButton}>
-          <Button
-            label="Create Handoff"
-            onPress={save}
-            disabled={!childId || !fromMemberId || !toMemberId}
-          />
-        </View>
-        <View style={styles.actionButton}>
-          <Button
-            label="Cancel"
-            variant="secondary"
-            onPress={() => router.back()}
-          />
-        </View>
-      </View>
+      <Button
+        label="Create Handoff"
+        onPress={save}
+        disabled={!childId || !fromMemberId || !toMemberId}
+      />
     </Screen>
   );
 }
@@ -230,8 +220,6 @@ const styles = StyleSheet.create({
   options: { gap: spacing.sm, paddingRight: spacing.md },
   fieldRow: { flexDirection: "row", gap: spacing.sm },
   halfField: { flex: 1, minWidth: 0 },
-  actions: { flexDirection: "row", gap: spacing.sm },
-  actionButton: { flex: 1 },
   option: {
     minHeight: 40,
     justifyContent: "center",
