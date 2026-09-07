@@ -16,6 +16,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, radius, shadow, spacing } from "@/src/theme/tokens";
 import { initials } from "@/src/domain/rules";
+import { formatDateInput } from "@/src/lib/dateInput";
 
 export function Screen({
   children,
@@ -59,13 +60,33 @@ export function AppHeader({
   title,
   subtitle,
   right,
+  onBack,
 }: {
   title: string;
   subtitle?: string;
   right?: ReactNode;
+  onBack?: () => void;
 }) {
   return (
     <View style={styles.header}>
+      {onBack ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+          onPress={onBack}
+          hitSlop={8}
+          style={({ pressed }) => [
+            styles.headerBack,
+            pressed && styles.pressed,
+          ]}
+        >
+          <MaterialCommunityIcons
+            name="arrow-left"
+            size={24}
+            color={colors.forest}
+          />
+        </Pressable>
+      ) : null}
       <View style={styles.flex}>
         <Text style={styles.title}>{title}</Text>
         {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
@@ -199,6 +220,28 @@ export function Field({
   );
 }
 
+export function DateField({
+  value = "",
+  onChangeText,
+  onBlur,
+  ...props
+}: TextInputProps & { label: string; error?: string }) {
+  return (
+    <Field
+      {...props}
+      value={value}
+      onChangeText={onChangeText}
+      onBlur={(event) => {
+        const formatted = formatDateInput(value);
+        if (formatted !== value) onChangeText?.(formatted);
+        onBlur?.(event);
+      }}
+      inputMode="numeric"
+      maxLength={10}
+    />
+  );
+}
+
 export function Pill({
   label,
   tone = "green",
@@ -270,6 +313,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.md,
     marginBottom: spacing.xs,
+  },
+  headerBack: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: -10,
   },
   title: {
     color: colors.ink,

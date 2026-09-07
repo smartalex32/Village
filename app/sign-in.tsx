@@ -14,6 +14,7 @@ export default function SignInScreen() {
       <AppHeader
         title="Welcome back"
         subtitle="Sign in to see what your village is handling."
+        onBack={() => router.back()}
       />
       <Card style={styles.form}>
         <AuthForm

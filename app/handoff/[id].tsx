@@ -9,7 +9,6 @@ import {
   Card,
   Pill,
   Screen,
-  SectionHeader,
   uiStyles,
 } from "@/src/components/ui";
 import { useVillage } from "@/src/providers/VillageProvider";
@@ -23,8 +22,7 @@ export default function HandoffDetailScreen() {
   if (!handoff)
     return (
       <Screen>
-        <AppHeader title="Handoff unavailable" />
-        <Button label="Back" onPress={() => router.back()} />
+        <AppHeader title="Handoff unavailable" onBack={() => router.back()} />
       </Screen>
     );
   const child = data.children.find((item) => item.id === handoff.childId);
@@ -37,10 +35,10 @@ export default function HandoffDetailScreen() {
     handoff.status === "COMPLETED" || handoff.status === "CANCELLED";
   const isRecipient = handoff.toMemberId === data.currentMemberId;
   return (
-    <Screen>
+    <Screen scroll={false} style={styles.screen}>
       <AppHeader
         title="Handoff"
-        subtitle="A coordination record—not verified physical location."
+        onBack={() => router.back()}
         right={
           <Pill
             label={
@@ -61,63 +59,89 @@ export default function HandoffDetailScreen() {
           <Avatar
             name={child?.firstName ?? "Child"}
             uri={child?.avatarUrl}
-            size={58}
+            size={48}
           />
-          <View>
+          <View style={styles.summaryText}>
             <Text style={styles.child}>{child?.firstName}</Text>
-            <Text style={uiStyles.strong}>
+            <Text style={styles.transfer} numberOfLines={1}>
               {from?.displayName} → {to?.displayName}
             </Text>
-            <Text style={uiStyles.muted}>
+            <Text style={styles.meta} numberOfLines={1}>
               {format(new Date(handoff.scheduledAt), "EEEE 'at' h:mm a")}
+              {handoff.location ? ` · ${handoff.location}` : ""}
             </Text>
           </View>
         </View>
-        {handoff.location ? (
-          <Text style={uiStyles.body}>⌖ {handoff.location}</Text>
-        ) : null}
         {upcoming ? (
-          <Text style={uiStyles.body}>
-            ⌖ Upcoming: {upcoming.title} at{" "}
+          <Text style={styles.upcoming} numberOfLines={1}>
+            Upcoming: {upcoming.title} at{" "}
             {format(new Date(upcoming.startsAt), "h:mm a")}
           </Text>
         ) : null}
-      </Card>
-      <SectionHeader title="Items to bring" />
-      {handoff.items.map((item) => (
-        <Pressable
-          key={item.id}
-          accessibilityRole="checkbox"
-          accessibilityLabel={item.label}
-          accessibilityState={{ checked: item.ready, disabled: isClosed }}
-          disabled={isClosed}
-          onPress={() => data.toggleHandoffItem(handoff.id, item.id)}
-          style={styles.checkRow}
-        >
-          <View style={[styles.checkbox, item.ready && styles.checked]}>
-            {item.ready ? (
-              <MaterialCommunityIcons name="check" size={17} color="#fff" />
-            ) : null}
-          </View>
-          <Text style={[styles.itemText, isClosed && styles.closed]}>
-            {item.label}
-          </Text>
-        </Pressable>
-      ))}
-      <SectionHeader title="Notes" />
-      <Card>
-        <Text style={handoff.notes ? uiStyles.body : uiStyles.muted}>
-          {handoff.notes || "No notes were added."}
+        <Text style={styles.disclaimer} numberOfLines={1}>
+          Coordination record—not verified physical location.
         </Text>
       </Card>
-      {handoff.status === "COMPLETED" ? (
-        <Card style={styles.complete}>
-          <Text style={styles.completeTitle}>Handoff acknowledged</Text>
-          <Text style={uiStyles.muted}>
-            {handoff.acceptedAt
-              ? format(new Date(handoff.acceptedAt), "MMM d 'at' h:mm a")
-              : "Responsibility transferred."}
+      <View style={styles.flexibleDetails}>
+        <View style={styles.itemsSection}>
+          <Text style={styles.sectionTitle}>Items to bring</Text>
+          <View style={styles.itemsGrid}>
+            {handoff.items.map((item) => (
+              <Pressable
+                key={item.id}
+                accessibilityRole="checkbox"
+                accessibilityLabel={item.label}
+                accessibilityState={{ checked: item.ready, disabled: isClosed }}
+                disabled={isClosed}
+                onPress={() => data.toggleHandoffItem(handoff.id, item.id)}
+                style={styles.checkRow}
+              >
+                <View style={[styles.checkbox, item.ready && styles.checked]}>
+                  {item.ready ? (
+                    <MaterialCommunityIcons
+                      name="check"
+                      size={17}
+                      color="#fff"
+                    />
+                  ) : null}
+                </View>
+                <Text
+                  style={[styles.itemText, isClosed && styles.closed]}
+                  numberOfLines={2}
+                >
+                  {item.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+        <View style={styles.notesSection}>
+          <Text style={styles.sectionTitle}>Notes</Text>
+          <Card style={styles.notesCard}>
+            <Text style={handoff.notes ? uiStyles.body : uiStyles.muted}>
+              {handoff.notes || "No notes were added."}
+            </Text>
+          </Card>
+        </View>
+      </View>
+      {isClosed ? (
+        <Card
+          style={
+            handoff.status === "COMPLETED" ? styles.complete : styles.cancelled
+          }
+        >
+          <Text style={styles.completeTitle}>
+            {handoff.status === "COMPLETED"
+              ? "Handoff acknowledged"
+              : "Handoff cancelled"}
           </Text>
+          {handoff.status === "COMPLETED" ? (
+            <Text style={uiStyles.muted}>
+              {handoff.acceptedAt
+                ? format(new Date(handoff.acceptedAt), "MMM d 'at' h:mm a")
+                : "Responsibility transferred."}
+            </Text>
+          ) : null}
         </Card>
       ) : (
         <View style={styles.actions}>
@@ -144,16 +168,29 @@ export default function HandoffDetailScreen() {
           )}
         </View>
       )}
-      <Button label="Back" variant="ghost" onPress={() => router.back()} />
     </Screen>
   );
 }
 const styles = StyleSheet.create({
-  summary: { gap: spacing.md },
-  person: { gap: spacing.md },
-  child: { color: colors.ink, fontSize: 19, fontWeight: "900" },
+  screen: { gap: spacing.sm, paddingBottom: spacing.md },
+  summary: { gap: 6, padding: 12 },
+  person: { gap: spacing.sm },
+  summaryText: { flex: 1 },
+  child: { color: colors.ink, fontSize: 18, fontWeight: "900" },
+  transfer: { color: colors.ink, fontSize: 14, fontWeight: "700" },
+  meta: { color: colors.muted, fontSize: 12, marginTop: 1 },
+  upcoming: { color: colors.forestDark, fontSize: 12, fontWeight: "700" },
+  disclaimer: { color: colors.muted, fontSize: 10 },
+  flexibleDetails: { flex: 1, minHeight: 0, gap: spacing.sm },
+  itemsSection: { gap: 4 },
+  notesSection: { flex: 1, minHeight: 0, gap: 4 },
+  notesCard: { flex: 1, minHeight: 56, padding: 12 },
+  sectionTitle: { color: colors.ink, fontSize: 16, fontWeight: "800" },
+  itemsGrid: { flexDirection: "row", flexWrap: "wrap", columnGap: spacing.md },
   checkRow: {
     minHeight: 44,
+    flexBasis: "46%",
+    flexGrow: 1,
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
@@ -168,11 +205,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   checked: { backgroundColor: colors.forest, borderColor: colors.forest },
-  itemText: { color: colors.ink, fontSize: 15 },
+  itemText: { flex: 1, color: colors.ink, fontSize: 14 },
   closed: { color: colors.muted },
-  actions: { flexDirection: "row", gap: spacing.sm },
+  actions: { gap: spacing.sm },
   complete: { backgroundColor: colors.mint, borderColor: "#9CD2C3" },
-  waiting: { flex: 1, backgroundColor: colors.surfaceMuted },
+  cancelled: { backgroundColor: colors.dangerSoft, borderColor: "#E6AAAA" },
+  waiting: { padding: 12, backgroundColor: colors.surfaceMuted },
   completeTitle: {
     color: colors.forestDark,
     fontWeight: "800",

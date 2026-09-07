@@ -27,8 +27,7 @@ export default function MemberDetailScreen() {
   if (!member)
     return (
       <Screen>
-        <AppHeader title="Member unavailable" />
-        <Button label="Back" onPress={() => router.back()} />
+        <AppHeader title="Member unavailable" onBack={() => router.back()} />
       </Screen>
     );
   const remove = () =>
@@ -49,7 +48,11 @@ export default function MemberDetailScreen() {
     );
   return (
     <Screen>
-      <AppHeader title={member.displayName} subtitle={member.relationship} />
+      <AppHeader
+        title={member.displayName}
+        subtitle={member.relationship}
+        onBack={() => router.back()}
+      />
       <Card style={styles.profile}>
         <Avatar name={member.displayName} uri={member.avatarUrl} size={74} />
         <View style={styles.flex}>
@@ -182,7 +185,6 @@ export default function MemberDetailScreen() {
       {canManage ? (
         <Button label="Remove from Village" variant="danger" onPress={remove} />
       ) : null}
-      <Button label="Back" variant="ghost" onPress={() => router.back()} />
     </Screen>
   );
 }

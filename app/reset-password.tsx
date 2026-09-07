@@ -19,6 +19,7 @@ export default function ResetPasswordScreen() {
       <AppHeader
         title="Reset password"
         subtitle="We’ll send a secure link to your email."
+        onBack={() => router.back()}
       />
       <Card style={styles.form}>
         <Field
@@ -34,11 +35,6 @@ export default function ResetPasswordScreen() {
           disabled={!email.includes("@")}
         />
         {message ? <Text style={styles.message}>{message}</Text> : null}
-        <Button
-          label="Back to Sign In"
-          variant="ghost"
-          onPress={() => router.back()}
-        />
       </Card>
     </Screen>
   );

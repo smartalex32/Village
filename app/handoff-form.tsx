@@ -1,7 +1,7 @@
 import { randomUUID } from "expo-crypto";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { AppHeader, Button, Field, Screen } from "@/src/components/ui";
 import { useVillage } from "@/src/providers/VillageProvider";
 import { colors, radius, spacing } from "@/src/theme/tokens";
@@ -76,10 +76,11 @@ export default function HandoffFormScreen() {
   }
 
   return (
-    <Screen>
+    <Screen style={styles.screen}>
       <AppHeader
         title="Create Handoff"
         subtitle="Prepare the details the next caregiver needs."
+        onBack={() => router.back()}
       />
       <ChoiceRow
         label="Child"
@@ -116,26 +117,38 @@ export default function HandoffFormScreen() {
         value={toMemberId}
         onChange={setToMemberId}
       />
-      <Field
-        label="When"
-        value={new Intl.DateTimeFormat(undefined, {
-          dateStyle: "medium",
-          timeStyle: "short",
-        }).format(new Date(scheduledAt))}
-        editable={false}
-      />
-      <Field label="Location" value={location} onChangeText={setLocation} />
-      <Field
-        label="Items to bring (comma separated)"
-        value={items}
-        onChangeText={setItems}
-      />
-      <Field
-        label="Notes (optional)"
-        value={notes}
-        onChangeText={setNotes}
-        multiline
-      />
+      <View style={styles.fieldRow}>
+        <View style={styles.halfField}>
+          <Field
+            label="When"
+            value={new Intl.DateTimeFormat(undefined, {
+              dateStyle: "medium",
+              timeStyle: "short",
+            }).format(new Date(scheduledAt))}
+            editable={false}
+          />
+        </View>
+        <View style={styles.halfField}>
+          <Field label="Location" value={location} onChangeText={setLocation} />
+        </View>
+      </View>
+      <View style={styles.fieldRow}>
+        <View style={styles.halfField}>
+          <Field
+            label="Items to bring"
+            value={items}
+            onChangeText={setItems}
+            placeholder="Comma separated"
+          />
+        </View>
+        <View style={styles.halfField}>
+          <Field
+            label="Notes (optional)"
+            value={notes}
+            onChangeText={setNotes}
+          />
+        </View>
+      </View>
       {upcoming.length ? (
         <ChoiceRow
           label="Related event (optional)"
@@ -154,7 +167,6 @@ export default function HandoffFormScreen() {
         onPress={save}
         disabled={!childId || !fromMemberId || !toMemberId}
       />
-      <Button label="Cancel" variant="ghost" onPress={() => router.back()} />
     </Screen>
   );
 }
@@ -173,7 +185,11 @@ function ChoiceRow({
   return (
     <View style={styles.group}>
       <Text style={styles.label}>{label}</Text>
-      <View style={styles.options}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.options}
+      >
         {options.map((option) => {
           const selected = option.id === value;
           return (
@@ -192,17 +208,20 @@ function ChoiceRow({
             </Pressable>
           );
         })}
-      </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  group: { gap: spacing.sm },
+  screen: { gap: spacing.sm, paddingBottom: spacing.md },
+  group: { gap: spacing.xs },
   label: { color: colors.ink, fontWeight: "800" },
-  options: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
+  options: { gap: spacing.sm, paddingRight: spacing.md },
+  fieldRow: { flexDirection: "row", gap: spacing.sm },
+  halfField: { flex: 1, minWidth: 0 },
   option: {
-    minHeight: 42,
+    minHeight: 40,
     justifyContent: "center",
     borderWidth: 1,
     borderColor: colors.line,

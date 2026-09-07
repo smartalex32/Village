@@ -1,6 +1,7 @@
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { StyleSheet, Text, View } from "react-native";
-import { AppHeader, Button, Card, Screen } from "@/src/components/ui";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { AppHeader, Card, Screen } from "@/src/components/ui";
 import { useVillage } from "@/src/providers/VillageProvider";
 import { colors, spacing } from "@/src/theme/tokens";
 
@@ -14,67 +15,94 @@ export default function QuickActionsScreen() {
     currentMember?.role === "OWNER" ||
     currentMember?.role === "PARENT_GUARDIAN";
   return (
-    <Screen>
+    <Screen style={styles.screen}>
       <AppHeader
         title="What do you need?"
         subtitle="Create a structured care update."
+        onBack={() => router.back()}
       />
       <View style={styles.actions}>
         {canManage ? (
-          <Card style={styles.action}>
-            <Text style={styles.icon}>🤝</Text>
-            <View style={styles.copy}>
-              <Text style={styles.title}>Ask for Help</Text>
-              <Text style={styles.body}>
-                Send a pickup, dropoff, transportation, or babysitting request.
-              </Text>
-            </View>
-            <Button
-              label="Start"
-              onPress={() => router.replace("/help-request")}
-            />
-          </Card>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Ask for Help"
+            onPress={() => router.replace("/help-request")}
+          >
+            <Card style={styles.action}>
+              <Text style={styles.icon}>🤝</Text>
+              <View style={styles.copy}>
+                <Text style={styles.title}>Ask for Help</Text>
+                <Text style={styles.body} numberOfLines={2}>
+                  Send a pickup, dropoff, transportation, or babysitting
+                  request.
+                </Text>
+              </View>
+              <MaterialCommunityIcons
+                name="chevron-right"
+                size={24}
+                color={colors.muted}
+              />
+            </Card>
+          </Pressable>
         ) : null}
-        <Card style={styles.action}>
-          <Text style={styles.icon}>🔁</Text>
-          <View style={styles.copy}>
-            <Text style={styles.title}>Create Handoff</Text>
-            <Text style={styles.body}>
-              Prepare items and transfer responsibility to another caregiver.
-            </Text>
-          </View>
-          <Button
-            label="Create"
-            variant="secondary"
-            onPress={() => router.replace("/handoff-form")}
-          />
-        </Card>
-        {canManage ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Create Handoff"
+          onPress={() => router.replace("/handoff-form")}
+        >
           <Card style={styles.action}>
-            <Text style={styles.icon}>📅</Text>
+            <Text style={styles.icon}>🔁</Text>
             <View style={styles.copy}>
-              <Text style={styles.title}>Add Event</Text>
-              <Text style={styles.body}>
-                Schedule a care responsibility or family activity.
+              <Text style={styles.title}>Create Handoff</Text>
+              <Text style={styles.body} numberOfLines={2}>
+                Prepare items and transfer responsibility to another caregiver.
               </Text>
             </View>
-            <Button
-              label="Add"
-              variant="secondary"
-              onPress={() => router.replace("/event-form")}
+            <MaterialCommunityIcons
+              name="chevron-right"
+              size={24}
+              color={colors.muted}
             />
           </Card>
+        </Pressable>
+        {canManage ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Add Event"
+            onPress={() => router.replace("/event-form")}
+          >
+            <Card style={styles.action}>
+              <Text style={styles.icon}>📅</Text>
+              <View style={styles.copy}>
+                <Text style={styles.title}>Add Event</Text>
+                <Text style={styles.body} numberOfLines={2}>
+                  Schedule a care responsibility or family activity.
+                </Text>
+              </View>
+              <MaterialCommunityIcons
+                name="chevron-right"
+                size={24}
+                color={colors.muted}
+              />
+            </Card>
+          </Pressable>
         ) : null}
       </View>
-      <Button label="Cancel" variant="ghost" onPress={() => router.back()} />
     </Screen>
   );
 }
 const styles = StyleSheet.create({
-  actions: { gap: spacing.md },
-  action: { gap: spacing.sm },
-  icon: { fontSize: 30 },
-  copy: { gap: 4 },
-  title: { color: colors.ink, fontSize: 19, fontWeight: "800" },
-  body: { color: colors.muted, lineHeight: 20 },
+  screen: { gap: spacing.sm, paddingBottom: spacing.md },
+  actions: { gap: spacing.sm },
+  action: {
+    minHeight: 92,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    padding: 12,
+  },
+  icon: { fontSize: 28 },
+  copy: { flex: 1, gap: 3 },
+  title: { color: colors.ink, fontSize: 17, fontWeight: "800" },
+  body: { color: colors.muted, fontSize: 13, lineHeight: 18 },
 });

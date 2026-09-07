@@ -1,34 +1,44 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import {
   AppHeader,
   Avatar,
-  Button,
   Card,
-  EmptyState,
   Pill,
   Screen,
   SectionHeader,
   uiStyles,
 } from "@/src/components/ui";
-import { EventRow } from "@/src/components/EventRow";
 import { useVillage } from "@/src/providers/VillageProvider";
 import { formatHouseholdDate, householdDateKey } from "@/src/lib/dateTime";
+import { todaySummaryLimits } from "@/src/lib/todayLayout";
 import { colors, radius, spacing } from "@/src/theme/tokens";
 
 export default function TodayScreen() {
   const router = useRouter();
   const data = useVillage();
+  const { height } = useWindowDimensions();
   const activeChildren = data.children.filter((child) => !child.archived);
+  const now = new Date();
   const today = data.events
     .filter(
       (event) =>
         householdDateKey(event.startsAt, data.householdTimezone) ===
-          householdDateKey(new Date(), data.householdTimezone) &&
+          householdDateKey(now, data.householdTimezone) &&
         event.status === "SCHEDULED",
     )
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  const summaryLimits = todaySummaryLimits(height, activeChildren.length);
+  const visibleSchedule = today
+    .filter((event) => new Date(event.startsAt).getTime() >= now.getTime())
+    .slice(0, summaryLimits.schedule);
   const unread = data.notifications.filter((item) => !item.read).length;
   const activeRequests = data.helpRequests.filter(
     (request) => request.status === "OPEN" || request.status === "ASSIGNED",
@@ -39,8 +49,17 @@ export default function TodayScreen() {
   const canManage =
     currentMember?.role === "OWNER" ||
     currentMember?.role === "PARENT_GUARDIAN";
+  const visibleAttention = [
+    ...data.gaps.map((gap) => ({ kind: "gap" as const, gap })),
+    ...activeRequests.map((request) => ({
+      kind: "request" as const,
+      request,
+    })),
+  ].slice(0, summaryLimits.attention);
+
   return (
     <Screen
+      style={styles.screen}
       refreshing={data.backendState === "syncing"}
       onRefresh={() => void data.refreshRemote()}
     >
@@ -55,271 +74,331 @@ export default function TodayScreen() {
         title="Today"
         subtitle={`Good morning, ${currentMember?.displayName ?? "there"}. You’ve got this.`}
         right={
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`${unread} unread notifications`}
-            onPress={() => router.push("/notifications")}
-            style={styles.bell}
-          >
-            <MaterialCommunityIcons
-              name="bell-outline"
-              size={24}
-              color={colors.ink}
-            />
-            {unread ? (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{unread}</Text>
-              </View>
-            ) : null}
-          </Pressable>
+          <View style={styles.headerActions}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open account"
+              onPress={() => router.push("/account")}
+              style={styles.headerButton}
+            >
+              <MaterialCommunityIcons
+                name="account-circle-outline"
+                size={25}
+                color={colors.ink}
+              />
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`${unread} unread notifications`}
+              onPress={() => router.push("/notifications")}
+              style={styles.headerButton}
+            >
+              <MaterialCommunityIcons
+                name="bell-outline"
+                size={24}
+                color={colors.ink}
+              />
+              {unread ? (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{unread}</Text>
+                </View>
+              ) : null}
+            </Pressable>
+          </View>
         }
       />
-      {activeChildren.map((child, index) => {
-        const latestReceipt = data.handoffs
-          .filter(
-            (handoff) =>
-              handoff.childId === child.id &&
-              handoff.status === "COMPLETED" &&
-              handoff.acceptedAt,
-          )
-          .sort((a, b) =>
-            (b.acceptedAt ?? "").localeCompare(a.acceptedAt ?? ""),
-          )[0];
-        const caregiver = data.members.find(
-          (member) => member.id === latestReceipt?.toMemberId,
-        );
-        const handoff = data.handoffs.find(
-          (item) =>
-            item.childId === child.id &&
-            item.status !== "COMPLETED" &&
-            item.status !== "CANCELLED",
-        );
-        return (
-          <Card key={child.id}>
-            <View style={[uiStyles.row, styles.childTop]}>
-              <Avatar
-                name={child.firstName}
-                uri={child.avatarUrl}
-                size={58}
-                color={index % 2 === 0 ? "#F3E5CB" : colors.blue}
-              />
-              <View style={styles.flex}>
-                <Text style={styles.childName}>{child.firstName}</Text>
-                <Text style={uiStyles.muted}>Currently with</Text>
-                <Text style={uiStyles.strong}>
-                  {caregiver?.displayName ?? "Not yet acknowledged"}
-                </Text>
-              </View>
-              <Pill
-                label={
-                  caregiver?.id === data.currentMemberId
-                    ? "With you"
-                    : caregiver
-                      ? "Coordinated"
-                      : "No receipt"
-                }
-                tone={caregiver?.id === data.currentMemberId ? "blue" : "green"}
-              />
-            </View>
-            {handoff ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`View ${child.firstName}'s next handoff`}
-                onPress={() =>
-                  router.push({
-                    pathname: "/handoff/[id]",
-                    params: { id: handoff.id },
-                  })
-                }
-                style={styles.next}
-              >
-                <MaterialCommunityIcons
-                  name="account-switch-outline"
-                  size={22}
-                  color={colors.forest}
-                />
-                <View>
-                  <Text style={styles.nextLabel}>Next handoff</Text>
-                  <Text style={styles.nextText}>
-                    {
-                      data.members.find((m) => m.id === handoff.fromMemberId)
-                        ?.displayName
-                    }{" "}
-                    →{" "}
-                    {
-                      data.members.find((m) => m.id === handoff.toMemberId)
-                        ?.displayName
+
+      <SectionHeader title="Children" />
+      {activeChildren.length ? (
+        <View style={styles.childrenGrid}>
+          {activeChildren.map((child, index) => {
+            const latestReceipt = data.handoffs
+              .filter(
+                (handoff) =>
+                  handoff.childId === child.id &&
+                  handoff.status === "COMPLETED" &&
+                  handoff.acceptedAt,
+              )
+              .sort((a, b) =>
+                (b.acceptedAt ?? "").localeCompare(a.acceptedAt ?? ""),
+              )[0];
+            const caregiver = data.members.find(
+              (member) => member.id === latestReceipt?.toMemberId,
+            );
+            const handoff = data.handoffs.find(
+              (item) =>
+                item.childId === child.id &&
+                item.status !== "COMPLETED" &&
+                item.status !== "CANCELLED",
+            );
+            const fromName = data.members.find(
+              (member) => member.id === handoff?.fromMemberId,
+            )?.displayName;
+            const toName = data.members.find(
+              (member) => member.id === handoff?.toMemberId,
+            )?.displayName;
+
+            return (
+              <Card key={child.id} style={styles.childCard}>
+                <View style={styles.childSummary}>
+                  <Avatar
+                    name={child.firstName}
+                    uri={child.avatarUrl}
+                    size={40}
+                    color={index % 2 === 0 ? "#F3E5CB" : colors.blue}
+                  />
+                  <View style={styles.flex}>
+                    <Text style={styles.childName} numberOfLines={1}>
+                      {child.firstName}
+                    </Text>
+                    <Text style={styles.currentLabel}>Currently with</Text>
+                    <Text style={styles.caregiver} numberOfLines={1}>
+                      {caregiver?.displayName ?? "Not acknowledged"}
+                    </Text>
+                  </View>
+                  <Pill
+                    label={
+                      caregiver?.id === data.currentMemberId
+                        ? "With you"
+                        : caregiver
+                          ? "Coordinated"
+                          : "No receipt"
                     }
-                  </Text>
-                  <Text style={styles.nextLabel}>
-                    {householdDateKey(
-                      handoff.scheduledAt,
-                      data.householdTimezone,
-                    ) === householdDateKey(new Date(), data.householdTimezone)
-                      ? `Today at ${formatHouseholdDate(
+                    tone={
+                      caregiver?.id === data.currentMemberId ? "blue" : "green"
+                    }
+                  />
+                </View>
+                {handoff ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`View ${child.firstName}'s next handoff`}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/handoff/[id]",
+                        params: { id: handoff.id },
+                      })
+                    }
+                    style={styles.nextHandoff}
+                  >
+                    <MaterialCommunityIcons
+                      name="account-switch-outline"
+                      size={17}
+                      color={colors.forest}
+                    />
+                    <View style={styles.flex}>
+                      <Text style={styles.nextHandoffTime} numberOfLines={1}>
+                        Next ·{" "}
+                        {formatHouseholdDate(
                           handoff.scheduledAt,
                           data.householdTimezone,
                           { hour: "numeric", minute: "2-digit" },
-                        )}`
-                      : formatHouseholdDate(
-                          handoff.scheduledAt,
-                          data.householdTimezone,
-                          {
-                            weekday: "short",
-                            month: "short",
-                            day: "numeric",
-                            hour: "numeric",
-                            minute: "2-digit",
-                          },
                         )}
-                  </Text>
-                </View>
-              </Pressable>
-            ) : null}
-          </Card>
-        );
-      })}
+                      </Text>
+                      <Text style={styles.nextHandoffPeople} numberOfLines={1}>
+                        {fromName} → {toName}
+                      </Text>
+                    </View>
+                  </Pressable>
+                ) : null}
+              </Card>
+            );
+          })}
+        </View>
+      ) : (
+        <Card style={styles.emptyCard}>
+          <Text style={styles.emptyTitle}>No active children</Text>
+          <Text style={uiStyles.muted}>Add a child from the Family tab.</Text>
+        </Card>
+      )}
+
       <SectionHeader
-        title="Today"
+        title="Today’s schedule"
         action={
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="See all scheduled care"
-            onPress={() => router.push("/schedule")}
+            onPress={() => router.navigate("/schedule")}
+            hitSlop={8}
           >
             <Text style={uiStyles.link}>See all</Text>
           </Pressable>
         }
       />
-      {today.length ? (
-        <Card style={styles.eventCard}>
-          {today.map((event) => (
-            <EventRow
+      {visibleSchedule.length ? (
+        <Card style={styles.scheduleList}>
+          {visibleSchedule.map((event, index) => (
+            <View
               key={event.id}
-              event={event}
-              child={data.children.find((child) => child.id === event.childId)}
-              caregiver={data.members.find(
-                (member) => member.id === event.caregiverId,
-              )}
-              timeZone={data.householdTimezone}
-            />
+              style={[styles.scheduleCard, index > 0 && styles.scheduleDivider]}
+            >
+              <View style={styles.scheduleIcon}>
+                <MaterialCommunityIcons
+                  name="calendar-clock-outline"
+                  size={20}
+                  color={colors.forestDark}
+                />
+              </View>
+              <View style={styles.flex}>
+                <Text style={styles.scheduleEyebrow}>
+                  {index === 0 ? "Up next · " : ""}
+                  {formatHouseholdDate(event.startsAt, data.householdTimezone, {
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}
+                </Text>
+                <Text style={styles.scheduleTitle} numberOfLines={1}>
+                  {
+                    data.children.find((child) => child.id === event.childId)
+                      ?.firstName
+                  }{" "}
+                  — {event.title}
+                </Text>
+                <Text style={styles.scheduleMeta} numberOfLines={1}>
+                  {event.location ?? "No location"}
+                  {event.caregiverId
+                    ? ` · ${
+                        data.members.find(
+                          (member) => member.id === event.caregiverId,
+                        )?.displayName ?? "Unassigned"
+                      }`
+                    : ""}
+                </Text>
+              </View>
+            </View>
           ))}
         </Card>
       ) : (
-        <EmptyState
-          icon="calendar-check-outline"
-          title="A clear day"
-          body="No care responsibilities are scheduled for today."
-        />
+        <Card style={styles.allClearCard}>
+          <MaterialCommunityIcons
+            name="calendar-check-outline"
+            size={22}
+            color={colors.forest}
+          />
+          <View style={styles.flex}>
+            <Text style={styles.emptyTitle}>Today is wrapped up</Text>
+            <Text style={uiStyles.muted}>No more scheduled care today.</Text>
+          </View>
+        </Card>
       )}
-      {activeRequests.length ? (
-        <>
-          <SectionHeader title="Help requests" />
-          {activeRequests.map((request) => (
-            <Card key={request.id} style={styles.request}>
-              <View style={styles.flex}>
-                <Text style={uiStyles.strong}>
-                  {
-                    data.children.find((child) => child.id === request.childId)
-                      ?.firstName
-                  }{" "}
-                  · {request.type.toLowerCase()}
-                </Text>
-                <Text style={uiStyles.muted}>
-                  {formatHouseholdDate(
-                    request.startsAt,
-                    data.householdTimezone,
-                    {
-                      month: "short",
-                      day: "numeric",
-                      hour: "numeric",
-                      minute: "2-digit",
-                    },
-                  )}{" "}
-                  ·{" "}
-                  {request.status === "ASSIGNED"
-                    ? "Covered"
-                    : "Awaiting response"}
-                </Text>
-              </View>
-              <Button
-                label="View"
-                variant="secondary"
+
+      <SectionHeader title="Needs attention" />
+      {visibleAttention.length ? (
+        <View style={styles.attentionList}>
+          {visibleAttention.map((item) =>
+            item.kind === "gap" ? (
+              <Card key={`gap-${item.gap.id}`} style={styles.alert}>
+                <View style={styles.attentionRow}>
+                  <MaterialCommunityIcons
+                    name="alert-outline"
+                    size={22}
+                    color={colors.danger}
+                  />
+                  <View style={styles.flex}>
+                    <Text style={styles.alertHeading} numberOfLines={1}>
+                      {formatHouseholdDate(
+                        item.gap.startsAt,
+                        data.householdTimezone,
+                        {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                        },
+                      )}
+                    </Text>
+                    <Text style={styles.alertBody} numberOfLines={1}>
+                      {
+                        data.children.find(
+                          (child) => child.id === item.gap.childId,
+                        )?.firstName
+                      }{" "}
+                      — {item.gap.title}
+                    </Text>
+                    <Text style={styles.alertMissing}>
+                      No caregiver assigned
+                    </Text>
+                  </View>
+                  {canManage ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Find Help"
+                      onPress={() =>
+                        router.push({
+                          pathname: "/help-request",
+                          params: { eventId: item.gap.id },
+                        })
+                      }
+                      style={styles.compactAction}
+                    >
+                      <Text style={styles.compactActionText}>Find help</Text>
+                    </Pressable>
+                  ) : null}
+                </View>
+              </Card>
+            ) : (
+              <Pressable
+                key={`request-${item.request.id}`}
+                accessibilityRole="button"
+                accessibilityLabel="View active help request"
                 onPress={() =>
                   router.push({
                     pathname: "/help-sent",
-                    params: { id: request.id },
+                    params: { id: item.request.id },
                   })
                 }
-              />
-            </Card>
-          ))}
-        </>
-      ) : null}
-      {data.gaps.length ? (
-        <>
-          <SectionHeader title="Needs attention" />
-          <Card style={styles.alert}>
-            <View style={styles.alertTitle}>
-              <MaterialCommunityIcons
-                name="alert-outline"
-                size={24}
-                color={colors.danger}
-              />
-              <View style={styles.flex}>
-                <Text style={styles.alertHeading}>
-                  {formatHouseholdDate(
-                    data.gaps[0].startsAt,
-                    data.householdTimezone,
-                    { weekday: "long", month: "long", day: "numeric" },
-                  )}
-                </Text>
-                <Text style={styles.alertBody}>
-                  {
-                    data.children.find(
-                      (child) => child.id === data.gaps[0].childId,
-                    )?.firstName
-                  }{" "}
-                  — {data.gaps[0].title}
-                </Text>
-                <Text style={styles.alertMissing}>No caregiver assigned</Text>
-              </View>
-            </View>
-            {canManage ? (
-              <Button
-                label="Find Help"
-                variant="secondary"
-                onPress={() =>
-                  router.push({
-                    pathname: "/help-request",
-                    params: { eventId: data.gaps[0].id },
-                  })
-                }
-              />
-            ) : null}
-          </Card>
-        </>
-      ) : null}
-      <SectionHeader title="Quick actions" />
-      <View style={styles.quick}>
-        {canManage ? (
-          <Button
-            label="Ask for Help"
-            icon="hand-heart"
-            onPress={() => router.push("/help-request")}
+              >
+                <Card style={styles.requestCard}>
+                  <MaterialCommunityIcons
+                    name="hand-heart-outline"
+                    size={22}
+                    color={colors.forest}
+                  />
+                  <View style={styles.flex}>
+                    <Text style={styles.emptyTitle} numberOfLines={1}>
+                      {
+                        data.children.find(
+                          (child) => child.id === item.request.childId,
+                        )?.firstName
+                      }{" "}
+                      · {item.request.type.toLowerCase()}
+                    </Text>
+                    <Text style={uiStyles.muted} numberOfLines={1}>
+                      {item.request.status === "ASSIGNED"
+                        ? "Care is covered. Tap for details."
+                        : "Waiting for a response. Tap for details."}
+                    </Text>
+                  </View>
+                  <MaterialCommunityIcons
+                    name="chevron-right"
+                    size={22}
+                    color={colors.muted}
+                  />
+                </Card>
+              </Pressable>
+            ),
+          )}
+        </View>
+      ) : (
+        <Card style={styles.allClearCard}>
+          <MaterialCommunityIcons
+            name="check-circle-outline"
+            size={22}
+            color={colors.forest}
           />
-        ) : null}
-        <Button
-          label="Create Handoff"
-          variant="secondary"
-          icon="account-switch"
-          onPress={() => router.push("/quick-actions")}
-        />
-      </View>
+          <View style={styles.flex}>
+            <Text style={styles.emptyTitle}>Everything is covered</Text>
+            <Text style={uiStyles.muted}>
+              No open requests or coverage gaps.
+            </Text>
+          </View>
+        </Card>
+      )}
     </Screen>
   );
 }
+
 const styles = StyleSheet.create({
+  screen: { gap: spacing.sm, paddingBottom: spacing.md },
   sync: { textAlign: "center", color: colors.muted, fontSize: 12 },
   syncError: {
     textAlign: "center",
@@ -328,7 +407,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   flex: { flex: 1 },
-  bell: {
+  headerActions: { flexDirection: "row", alignItems: "center" },
+  headerButton: {
     width: 44,
     height: 44,
     alignItems: "center",
@@ -347,29 +427,85 @@ const styles = StyleSheet.create({
     backgroundColor: colors.danger,
   },
   badgeText: { color: "#fff", fontSize: 10, fontWeight: "800" },
-  childTop: { gap: spacing.md },
-  childName: { fontSize: 20, fontWeight: "800", color: colors.ink },
-  next: {
-    marginTop: spacing.md,
-    padding: spacing.sm,
-    backgroundColor: colors.surfaceMuted,
+  childrenGrid: { gap: spacing.sm },
+  childCard: { padding: 12, gap: 8 },
+  childSummary: { flexDirection: "row", alignItems: "center", gap: 10 },
+  childName: { color: colors.ink, fontSize: 17, fontWeight: "800" },
+  currentLabel: { color: colors.muted, fontSize: 11 },
+  caregiver: { color: colors.ink, fontSize: 15, fontWeight: "700" },
+  nextHandoff: {
+    minHeight: 44,
+    marginTop: 2,
+    paddingHorizontal: 8,
     borderRadius: radius.sm,
     flexDirection: "row",
-    gap: spacing.sm,
     alignItems: "center",
+    gap: 6,
+    backgroundColor: colors.surfaceMuted,
   },
-  nextLabel: { color: colors.muted, fontSize: 12 },
-  nextText: { color: colors.ink, fontWeight: "700", marginVertical: 2 },
-  eventCard: { paddingVertical: 0 },
-  request: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  nextHandoffTime: {
+    color: colors.forestDark,
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  nextHandoffPeople: { color: colors.muted, fontSize: 10, marginTop: 1 },
+  scheduleList: { paddingVertical: 0 },
+  scheduleCard: {
+    minHeight: 68,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  scheduleDivider: { borderTopWidth: 1, borderTopColor: colors.line },
+  scheduleIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.surfaceMuted,
+  },
+  scheduleEyebrow: { color: colors.forest, fontSize: 11, fontWeight: "700" },
+  scheduleTitle: { color: colors.ink, fontSize: 14, fontWeight: "800" },
+  scheduleMeta: { color: colors.muted, fontSize: 11, marginTop: 1 },
+  emptyCard: { padding: 12 },
+  emptyTitle: { color: colors.ink, fontSize: 14, fontWeight: "800" },
+  allClearCard: {
+    padding: 12,
+    minHeight: 68,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
   alert: {
+    padding: 12,
     backgroundColor: "#FFF9EF",
     borderColor: "#F3C98C",
-    gap: spacing.md,
+    gap: spacing.sm,
   },
-  alertTitle: { flexDirection: "row", gap: spacing.sm },
-  alertHeading: { color: colors.ink, fontWeight: "800" },
-  alertBody: { color: colors.muted, marginTop: 3 },
-  alertMissing: { color: colors.danger, fontWeight: "700", marginTop: 2 },
-  quick: { gap: spacing.sm },
+  attentionList: { gap: spacing.sm },
+  attentionRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  alertHeading: { color: colors.ink, fontSize: 12, fontWeight: "800" },
+  alertBody: { color: colors.muted, fontSize: 11, marginTop: 1 },
+  alertMissing: { color: colors.danger, fontSize: 11, fontWeight: "700" },
+  compactAction: {
+    minHeight: 44,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.forest,
+    paddingHorizontal: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.surface,
+  },
+  compactActionText: { color: colors.forest, fontSize: 12, fontWeight: "800" },
+  requestCard: {
+    minHeight: 68,
+    padding: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
 });

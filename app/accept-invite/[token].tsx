@@ -37,16 +37,21 @@ export default function AcceptInvitationScreen() {
   }
   return (
     <Screen style={styles.screen}>
+      <AppHeader
+        title="Join their Village"
+        subtitle="Review this private household invitation."
+        onBack={() => router.replace(user ? "/(tabs)" : "/")}
+      />
       <View style={styles.hero}>
         <MaterialCommunityIcons
           name="home-heart"
           size={62}
           color={colors.forest}
         />
-        <AppHeader
-          title="Join their Village"
-          subtitle="This private invitation grants only the child and assignment access selected by the household owner."
-        />
+        <Text style={styles.invitationNote}>
+          This private invitation grants only the child and assignment access
+          selected by the household owner.
+        </Text>
       </View>
       <Card style={styles.card}>
         {status === "accepted" ? (
@@ -126,6 +131,11 @@ export default function AcceptInvitationScreen() {
 const styles = StyleSheet.create({
   screen: { justifyContent: "center" },
   hero: { alignItems: "center", gap: spacing.md },
+  invitationNote: {
+    color: colors.muted,
+    lineHeight: 20,
+    textAlign: "center",
+  },
   card: { gap: spacing.md },
   title: {
     color: colors.ink,
