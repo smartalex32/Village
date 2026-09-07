@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { AppHeader, Button, Field, Screen } from "@/src/components/ui";
 import { useVillage } from "@/src/providers/VillageProvider";
 import { colors, radius, spacing } from "@/src/theme/tokens";
@@ -40,7 +40,7 @@ export default function EventFormScreen() {
     router.back();
   }
   return (
-    <Screen>
+    <Screen style={styles.screen}>
       <AppHeader
         title={existing ? "Edit Event" : "Add Event"}
         subtitle={
@@ -50,7 +50,11 @@ export default function EventFormScreen() {
         }
       />
       <Text style={styles.label}>Child</Text>
-      <View style={styles.chips}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.chips}
+      >
         {children.map((child) => (
           <Pressable
             key={child.id}
@@ -69,29 +73,39 @@ export default function EventFormScreen() {
             </Text>
           </Pressable>
         ))}
-      </View>
+      </ScrollView>
       <Field
         label="Event title"
         placeholder="School pickup"
         value={title}
         onChangeText={setTitle}
       />
-      <Field
-        label="When"
-        value={new Intl.DateTimeFormat(undefined, {
-          dateStyle: "medium",
-          timeStyle: "short",
-        }).format(new Date(startsAt))}
-        editable={false}
-      />
-      <Field
-        label="Location"
-        placeholder="Where does this happen?"
-        value={location}
-        onChangeText={setLocation}
-      />
+      <View style={styles.fieldRow}>
+        <View style={styles.halfField}>
+          <Field
+            label="When"
+            value={new Intl.DateTimeFormat(undefined, {
+              dateStyle: "medium",
+              timeStyle: "short",
+            }).format(new Date(startsAt))}
+            editable={false}
+          />
+        </View>
+        <View style={styles.halfField}>
+          <Field
+            label="Location"
+            placeholder="Where?"
+            value={location}
+            onChangeText={setLocation}
+          />
+        </View>
+      </View>
       <Text style={styles.label}>Assigned caregiver</Text>
-      <View style={styles.chips}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.chips}
+      >
         <Pressable
           accessibilityRole="button"
           accessibilityState={{ selected: !caregiverId }}
@@ -125,12 +139,23 @@ export default function EventFormScreen() {
               </Text>
             </Pressable>
           ))}
+      </ScrollView>
+      <View style={styles.actions}>
+        <View style={styles.actionButton}>
+          <Button
+            label={existing ? "Save Changes" : "Save Event"}
+            onPress={save}
+            disabled={!title.trim() || !childId}
+          />
+        </View>
+        <View style={styles.actionButton}>
+          <Button
+            label="Cancel"
+            variant="secondary"
+            onPress={() => router.back()}
+          />
+        </View>
       </View>
-      <Button
-        label={existing ? "Save Changes" : "Save Event"}
-        onPress={save}
-        disabled={!title.trim() || !childId}
-      />
       {existing ? (
         <Button
           label="Cancel Event"
@@ -141,13 +166,17 @@ export default function EventFormScreen() {
           }}
         />
       ) : null}
-      <Button label="Cancel" variant="ghost" onPress={() => router.back()} />
     </Screen>
   );
 }
 const styles = StyleSheet.create({
+  screen: { gap: spacing.sm, paddingBottom: spacing.md },
   label: { color: colors.ink, fontWeight: "800" },
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
+  chips: { gap: spacing.sm, paddingRight: spacing.md },
+  fieldRow: { flexDirection: "row", gap: spacing.sm },
+  halfField: { flex: 1, minWidth: 0 },
+  actions: { flexDirection: "row", gap: spacing.sm },
+  actionButton: { flex: 1 },
   chip: {
     borderWidth: 1,
     borderColor: colors.line,

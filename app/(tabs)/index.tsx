@@ -1,6 +1,12 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import {
   AppHeader,
   Avatar,
@@ -12,11 +18,13 @@ import {
 } from "@/src/components/ui";
 import { useVillage } from "@/src/providers/VillageProvider";
 import { formatHouseholdDate, householdDateKey } from "@/src/lib/dateTime";
+import { todaySummaryLimits } from "@/src/lib/todayLayout";
 import { colors, radius, spacing } from "@/src/theme/tokens";
 
 export default function TodayScreen() {
   const router = useRouter();
   const data = useVillage();
+  const { height } = useWindowDimensions();
   const activeChildren = data.children.filter((child) => !child.archived);
   const now = new Date();
   const today = data.events
@@ -27,9 +35,10 @@ export default function TodayScreen() {
         event.status === "SCHEDULED",
     )
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
-  const nextTodayEvent = today.find(
-    (event) => new Date(event.startsAt).getTime() >= now.getTime(),
-  );
+  const summaryLimits = todaySummaryLimits(height, activeChildren.length);
+  const visibleSchedule = today
+    .filter((event) => new Date(event.startsAt).getTime() >= now.getTime())
+    .slice(0, summaryLimits.schedule);
   const unread = data.notifications.filter((item) => !item.read).length;
   const activeRequests = data.helpRequests.filter(
     (request) => request.status === "OPEN" || request.status === "ASSIGNED",
@@ -40,8 +49,13 @@ export default function TodayScreen() {
   const canManage =
     currentMember?.role === "OWNER" ||
     currentMember?.role === "PARENT_GUARDIAN";
-  const firstGap = data.gaps[0];
-  const firstRequest = activeRequests[0];
+  const visibleAttention = [
+    ...data.gaps.map((gap) => ({ kind: "gap" as const, gap })),
+    ...activeRequests.map((request) => ({
+      kind: "request" as const,
+      request,
+    })),
+  ].slice(0, summaryLimits.attention);
 
   return (
     <Screen
@@ -197,43 +211,48 @@ export default function TodayScreen() {
           </Pressable>
         }
       />
-      {nextTodayEvent ? (
-        <Card style={styles.scheduleCard}>
-          <View style={styles.scheduleIcon}>
-            <MaterialCommunityIcons
-              name="calendar-clock-outline"
-              size={20}
-              color={colors.forestDark}
-            />
-          </View>
-          <View style={styles.flex}>
-            <Text style={styles.scheduleEyebrow}>
-              Up next ·{" "}
-              {formatHouseholdDate(
-                nextTodayEvent.startsAt,
-                data.householdTimezone,
-                { hour: "numeric", minute: "2-digit" },
-              )}
-            </Text>
-            <Text style={styles.scheduleTitle} numberOfLines={1}>
-              {
-                data.children.find(
-                  (child) => child.id === nextTodayEvent.childId,
-                )?.firstName
-              }{" "}
-              — {nextTodayEvent.title}
-            </Text>
-            <Text style={styles.scheduleMeta} numberOfLines={1}>
-              {nextTodayEvent.location ?? "No location"}
-              {nextTodayEvent.caregiverId
-                ? ` · ${
-                    data.members.find(
-                      (member) => member.id === nextTodayEvent.caregiverId,
-                    )?.displayName ?? "Unassigned"
-                  }`
-                : ""}
-            </Text>
-          </View>
+      {visibleSchedule.length ? (
+        <Card style={styles.scheduleList}>
+          {visibleSchedule.map((event, index) => (
+            <View
+              key={event.id}
+              style={[styles.scheduleCard, index > 0 && styles.scheduleDivider]}
+            >
+              <View style={styles.scheduleIcon}>
+                <MaterialCommunityIcons
+                  name="calendar-clock-outline"
+                  size={20}
+                  color={colors.forestDark}
+                />
+              </View>
+              <View style={styles.flex}>
+                <Text style={styles.scheduleEyebrow}>
+                  {index === 0 ? "Up next · " : ""}
+                  {formatHouseholdDate(event.startsAt, data.householdTimezone, {
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}
+                </Text>
+                <Text style={styles.scheduleTitle} numberOfLines={1}>
+                  {
+                    data.children.find((child) => child.id === event.childId)
+                      ?.firstName
+                  }{" "}
+                  — {event.title}
+                </Text>
+                <Text style={styles.scheduleMeta} numberOfLines={1}>
+                  {event.location ?? "No location"}
+                  {event.caregiverId
+                    ? ` · ${
+                        data.members.find(
+                          (member) => member.id === event.caregiverId,
+                        )?.displayName ?? "Unassigned"
+                      }`
+                    : ""}
+                </Text>
+              </View>
+            </View>
+          ))}
         </Card>
       ) : (
         <Card style={styles.allClearCard}>
@@ -250,102 +269,101 @@ export default function TodayScreen() {
       )}
 
       <SectionHeader title="Needs attention" />
-      {firstGap ? (
-        <Card style={styles.alert}>
-          <View style={styles.attentionRow}>
-            <MaterialCommunityIcons
-              name="alert-outline"
-              size={22}
-              color={colors.danger}
-            />
-            <View style={styles.flex}>
-              <Text style={styles.alertHeading} numberOfLines={1}>
-                {formatHouseholdDate(
-                  firstGap.startsAt,
-                  data.householdTimezone,
-                  { weekday: "short", month: "short", day: "numeric" },
-                )}
-              </Text>
-              <Text style={styles.alertBody} numberOfLines={1}>
-                {
-                  data.children.find((child) => child.id === firstGap.childId)
-                    ?.firstName
-                }{" "}
-                — {firstGap.title}
-              </Text>
-              <Text style={styles.alertMissing}>No caregiver assigned</Text>
-            </View>
-            {canManage ? (
+      {visibleAttention.length ? (
+        <View style={styles.attentionList}>
+          {visibleAttention.map((item) =>
+            item.kind === "gap" ? (
+              <Card key={`gap-${item.gap.id}`} style={styles.alert}>
+                <View style={styles.attentionRow}>
+                  <MaterialCommunityIcons
+                    name="alert-outline"
+                    size={22}
+                    color={colors.danger}
+                  />
+                  <View style={styles.flex}>
+                    <Text style={styles.alertHeading} numberOfLines={1}>
+                      {formatHouseholdDate(
+                        item.gap.startsAt,
+                        data.householdTimezone,
+                        {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                        },
+                      )}
+                    </Text>
+                    <Text style={styles.alertBody} numberOfLines={1}>
+                      {
+                        data.children.find(
+                          (child) => child.id === item.gap.childId,
+                        )?.firstName
+                      }{" "}
+                      — {item.gap.title}
+                    </Text>
+                    <Text style={styles.alertMissing}>
+                      No caregiver assigned
+                    </Text>
+                  </View>
+                  {canManage ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Find Help"
+                      onPress={() =>
+                        router.push({
+                          pathname: "/help-request",
+                          params: { eventId: item.gap.id },
+                        })
+                      }
+                      style={styles.compactAction}
+                    >
+                      <Text style={styles.compactActionText}>Find help</Text>
+                    </Pressable>
+                  ) : null}
+                </View>
+              </Card>
+            ) : (
               <Pressable
+                key={`request-${item.request.id}`}
                 accessibilityRole="button"
-                accessibilityLabel="Find Help"
+                accessibilityLabel="View active help request"
                 onPress={() =>
                   router.push({
-                    pathname: "/help-request",
-                    params: { eventId: firstGap.id },
+                    pathname: "/help-sent",
+                    params: { id: item.request.id },
                   })
                 }
-                style={styles.compactAction}
               >
-                <Text style={styles.compactActionText}>Find help</Text>
+                <Card style={styles.requestCard}>
+                  <MaterialCommunityIcons
+                    name="hand-heart-outline"
+                    size={22}
+                    color={colors.forest}
+                  />
+                  <View style={styles.flex}>
+                    <Text style={styles.emptyTitle} numberOfLines={1}>
+                      {
+                        data.children.find(
+                          (child) => child.id === item.request.childId,
+                        )?.firstName
+                      }{" "}
+                      · {item.request.type.toLowerCase()}
+                    </Text>
+                    <Text style={uiStyles.muted} numberOfLines={1}>
+                      {item.request.status === "ASSIGNED"
+                        ? "Care is covered. Tap for details."
+                        : "Waiting for a response. Tap for details."}
+                    </Text>
+                  </View>
+                  <MaterialCommunityIcons
+                    name="chevron-right"
+                    size={22}
+                    color={colors.muted}
+                  />
+                </Card>
               </Pressable>
-            ) : null}
-          </View>
-          {firstRequest ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="View active help request"
-              onPress={() =>
-                router.push({
-                  pathname: "/help-sent",
-                  params: { id: firstRequest.id },
-                })
-              }
-              style={styles.requestLink}
-            >
-              <Text style={styles.requestLinkText}>
-                {activeRequests.length} help{" "}
-                {activeRequests.length === 1 ? "request" : "requests"} in
-                progress →
-              </Text>
-            </Pressable>
-          ) : null}
-        </Card>
-      ) : firstRequest ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="View active help request"
-          onPress={() =>
-            router.push({
-              pathname: "/help-sent",
-              params: { id: firstRequest.id },
-            })
-          }
-        >
-          <Card style={styles.requestCard}>
-            <MaterialCommunityIcons
-              name="hand-heart-outline"
-              size={22}
-              color={colors.forest}
-            />
-            <View style={styles.flex}>
-              <Text style={styles.emptyTitle}>
-                {activeRequests.length} help{" "}
-                {activeRequests.length === 1 ? "request" : "requests"}
-              </Text>
-              <Text style={uiStyles.muted}>
-                {firstRequest.status === "ASSIGNED"
-                  ? "Care is covered. Tap for details."
-                  : "Waiting for a response. Tap for details."}
-              </Text>
-            </View>
-            <MaterialCommunityIcons
-              name="chevron-right"
-              size={22}
-              color={colors.muted}
-            />
-          </Card>
-        </Pressable>
+            ),
+          )}
+        </View>
       ) : (
         <Card style={styles.allClearCard}>
           <MaterialCommunityIcons
@@ -416,13 +434,16 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   nextHandoffPeople: { color: colors.muted, fontSize: 10, marginTop: 1 },
+  scheduleList: { paddingVertical: 0 },
   scheduleCard: {
-    minHeight: 72,
-    padding: 12,
+    minHeight: 68,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
   },
+  scheduleDivider: { borderTopWidth: 1, borderTopColor: colors.line },
   scheduleIcon: {
     width: 40,
     height: 40,
@@ -449,6 +470,7 @@ const styles = StyleSheet.create({
     borderColor: "#F3C98C",
     gap: spacing.sm,
   },
+  attentionList: { gap: spacing.sm },
   attentionRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   alertHeading: { color: colors.ink, fontSize: 12, fontWeight: "800" },
   alertBody: { color: colors.muted, fontSize: 11, marginTop: 1 },
@@ -464,13 +486,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   compactActionText: { color: colors.forest, fontSize: 12, fontWeight: "800" },
-  requestLink: {
-    minHeight: 30,
-    borderTopWidth: 1,
-    borderTopColor: "#F3C98C",
-    justifyContent: "flex-end",
-  },
-  requestLinkText: { color: colors.forest, fontSize: 12, fontWeight: "700" },
   requestCard: {
     minHeight: 68,
     padding: 12,

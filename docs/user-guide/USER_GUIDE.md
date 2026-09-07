@@ -57,7 +57,7 @@ Tap the center **+** button when you need to act quickly.
 
 ## 3. Use the Today dashboard
 
-Today is the household’s compact coordination overview. It shows each child’s most recently acknowledged caregiver, the next handoff, the next event on today’s schedule, and the highest-priority coverage gap or help request. Tap **See all** beside Today’s schedule to switch to the full Schedule tab.
+Today is the household’s compact coordination overview. It always shows each child’s most recently acknowledged caregiver, at least the next available event on today’s schedule, and at least one coverage gap or help request when attention is needed. Otherwise, it confirms that everything is covered. Larger screens show additional schedule and attention items when space permits. Tap **See all** beside Today’s schedule to switch to the full Schedule tab.
 
 ![Today dashboard](images/03-today.png)
 
@@ -146,6 +146,8 @@ Use a structured help request when an event needs a caregiver.
 4. Select one or more eligible caregivers.
 5. Add an optional care note.
 6. Tap **Ask My Village** and confirm the summary.
+
+Tap **Back** or **Cancel** to leave without sending a request.
 
 ![Ask for Help screen](images/09-help-request.png)
 

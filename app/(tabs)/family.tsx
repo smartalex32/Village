@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import {
   AppHeader,
   Avatar,
@@ -32,7 +32,7 @@ export default function FamilyScreen() {
     currentMember?.role === "OWNER" ||
     currentMember?.role === "PARENT_GUARDIAN";
   return (
-    <Screen>
+    <Screen scroll={false} style={styles.screen}>
       <AppHeader
         title="Family"
         subtitle="Our crew."
@@ -49,59 +49,68 @@ export default function FamilyScreen() {
           ) : undefined
         }
       />
-      {children.map((child, index) => (
-        <Pressable
-          key={child.id}
-          accessibilityRole="button"
-          accessibilityLabel={`View ${child.firstName}'s profile`}
-          onPress={() =>
-            router.push({ pathname: "/child/[id]", params: { id: child.id } })
-          }
-        >
-          <Card style={styles.child}>
-            <Avatar
-              name={child.firstName}
-              uri={child.avatarUrl}
-              size={64}
-              color={index % 2 === 0 ? "#F3E5CB" : colors.blue}
-            />
-            <View style={styles.flex}>
-              <Text style={styles.name}>{child.firstName}</Text>
-              <Text style={uiStyles.muted}>
-                {age(child.birthDate)
-                  ? `${age(child.birthDate)} years old`
-                  : "Child profile"}
-              </Text>
-            </View>
-            <MaterialCommunityIcons
-              name="chevron-right"
-              size={26}
-              color={colors.muted}
-            />
-          </Card>
-        </Pressable>
-      ))}
-      {canManage ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Add another child"
-          onPress={() => router.push("/child-form")}
-        >
-          <Card style={styles.addChild}>
-            <View style={styles.addCircle}>
-              <MaterialCommunityIcons
-                name="plus"
-                size={24}
-                color={colors.forest}
+      <ScrollView
+        style={styles.listScroll}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {children.map((child, index) => (
+          <Pressable
+            key={child.id}
+            accessibilityRole="button"
+            accessibilityLabel={`View ${child.firstName}'s profile`}
+            onPress={() =>
+              router.push({
+                pathname: "/child/[id]",
+                params: { id: child.id },
+              })
+            }
+          >
+            <Card style={styles.child}>
+              <Avatar
+                name={child.firstName}
+                uri={child.avatarUrl}
+                size={64}
+                color={index % 2 === 0 ? "#F3E5CB" : colors.blue}
               />
-            </View>
-            <View>
-              <Text style={uiStyles.strong}>Add a child</Text>
-              <Text style={uiStyles.muted}>Keep everyone in one place.</Text>
-            </View>
-          </Card>
-        </Pressable>
-      ) : null}
+              <View style={styles.flex}>
+                <Text style={styles.name}>{child.firstName}</Text>
+                <Text style={uiStyles.muted}>
+                  {age(child.birthDate)
+                    ? `${age(child.birthDate)} years old`
+                    : "Child profile"}
+                </Text>
+              </View>
+              <MaterialCommunityIcons
+                name="chevron-right"
+                size={26}
+                color={colors.muted}
+              />
+            </Card>
+          </Pressable>
+        ))}
+        {canManage ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Add another child"
+            onPress={() => router.push("/child-form")}
+          >
+            <Card style={styles.addChild}>
+              <View style={styles.addCircle}>
+                <MaterialCommunityIcons
+                  name="plus"
+                  size={24}
+                  color={colors.forest}
+                />
+              </View>
+              <View>
+                <Text style={uiStyles.strong}>Add a child</Text>
+                <Text style={uiStyles.muted}>Keep everyone in one place.</Text>
+              </View>
+            </Card>
+          </Pressable>
+        ) : null}
+      </ScrollView>
       <Button
         label="Sign Out"
         variant="ghost"
@@ -114,6 +123,9 @@ export default function FamilyScreen() {
   );
 }
 const styles = StyleSheet.create({
+  screen: { gap: spacing.sm, paddingBottom: spacing.sm },
+  listScroll: { flex: 1 },
+  listContent: { gap: spacing.md, paddingBottom: spacing.sm },
   add: {
     width: 42,
     height: 42,

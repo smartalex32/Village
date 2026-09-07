@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import {
   AppHeader,
   Avatar,
@@ -68,14 +68,18 @@ export default function HelpRequestScreen() {
     router.replace({ pathname: "/help-sent", params: { id: request.id } });
   }
   return (
-    <Screen>
+    <Screen style={styles.screen}>
       <BackButton onPress={() => router.back()} />
       <AppHeader
         title="Ask for Help"
         subtitle="Send a request to your village."
       />
       <Text style={styles.label}>What type of help is needed?</Text>
-      <View style={styles.chips}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.horizontalOptions}
+      >
         {types.map((item) => (
           <Pressable
             key={item.value}
@@ -97,7 +101,7 @@ export default function HelpRequestScreen() {
             </Text>
           </Pressable>
         ))}
-      </View>
+      </ScrollView>
       <Text style={styles.label}>Which child?</Text>
       <View style={styles.chips}>
         {activeChildren.map((child) => (
@@ -119,22 +123,32 @@ export default function HelpRequestScreen() {
           </Pressable>
         ))}
       </View>
-      <Field
-        label="When?"
-        value={new Intl.DateTimeFormat(undefined, {
-          dateStyle: "medium",
-          timeStyle: "short",
-        }).format(new Date(startsAt))}
-        editable={false}
-      />
-      <Field
-        label="From where?"
-        value={location}
-        onChangeText={setLocation}
-        placeholder="Location"
-      />
+      <View style={styles.fieldRow}>
+        <View style={styles.halfField}>
+          <Field
+            label="When?"
+            value={new Intl.DateTimeFormat(undefined, {
+              dateStyle: "medium",
+              timeStyle: "short",
+            }).format(new Date(startsAt))}
+            editable={false}
+          />
+        </View>
+        <View style={styles.halfField}>
+          <Field
+            label="From where?"
+            value={location}
+            onChangeText={setLocation}
+            placeholder="Location"
+          />
+        </View>
+      </View>
       <Text style={styles.label}>Who should receive the request?</Text>
-      <View style={styles.recipientList}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.horizontalOptions}
+      >
         {recipients.map((member) => (
           <Pressable
             key={member.id}
@@ -150,7 +164,7 @@ export default function HelpRequestScreen() {
             <Avatar
               name={member.displayName}
               uri={member.avatarUrl}
-              size={36}
+              size={28}
             />
             <Text style={styles.recipientName}>{member.displayName}</Text>
             <Text style={styles.check}>
@@ -158,7 +172,7 @@ export default function HelpRequestScreen() {
             </Text>
           </Pressable>
         ))}
-      </View>
+      </ScrollView>
       {!recipients.length ? (
         <Text style={styles.empty}>
           No eligible caregivers have this capability and child access.
@@ -170,18 +184,24 @@ export default function HelpRequestScreen() {
         onChangeText={setNotes}
         multiline
         placeholder="Anything they need to know?"
+        style={styles.notes}
       />
       <Button
         label="Ask My Village"
         onPress={submit}
         disabled={!childId || !location.trim() || !recipientIds.length}
       />
+      <Button label="Cancel" variant="ghost" onPress={() => router.back()} />
     </Screen>
   );
 }
 const styles = StyleSheet.create({
+  screen: { gap: spacing.sm, paddingBottom: spacing.md },
   label: { color: colors.ink, fontWeight: "800", fontSize: 14 },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
+  horizontalOptions: { gap: spacing.sm, paddingRight: spacing.md },
+  fieldRow: { flexDirection: "row", gap: spacing.sm },
+  halfField: { flex: 1, minWidth: 0 },
   chip: {
     minHeight: 40,
     borderRadius: radius.sm,
@@ -210,9 +230,9 @@ const styles = StyleSheet.create({
     borderColor: colors.forest,
     backgroundColor: colors.mint,
   },
-  recipientList: { gap: spacing.sm },
   recipient: {
-    minHeight: 56,
+    minHeight: 46,
+    minWidth: 112,
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
@@ -226,4 +246,5 @@ const styles = StyleSheet.create({
   recipientName: { flex: 1, color: colors.ink, fontWeight: "700" },
   check: { color: colors.forest, fontWeight: "900", fontSize: 18 },
   empty: { color: colors.muted, fontStyle: "italic" },
+  notes: { minHeight: 62 },
 });

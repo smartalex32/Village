@@ -2,7 +2,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { formatDistanceToNow } from "date-fns";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import {
   AppHeader,
   Avatar,
@@ -30,7 +30,7 @@ export default function VillageScreen() {
     currentMember?.role === "OWNER" ||
     currentMember?.role === "PARENT_GUARDIAN";
   return (
-    <Screen>
+    <Screen scroll={false} style={styles.screen}>
       <AppHeader
         title="Village"
         subtitle="The people who help make it all work."
@@ -64,95 +64,104 @@ export default function VillageScreen() {
           </Pressable>
         ))}
       </View>
-      {section === "members" ? (
-        <Card style={styles.list}>
-          {members.map((member, index) => (
-            <Pressable
-              key={member.id}
-              accessibilityRole="button"
-              accessibilityLabel={`View ${member.displayName}`}
-              onPress={() =>
-                router.push({
-                  pathname: "/member/[id]",
-                  params: { id: member.id },
-                })
-              }
-              style={[
-                styles.member,
-                index < members.length - 1 && styles.border,
-              ]}
-            >
-              <Avatar name={member.displayName} uri={member.avatarUrl} />
-              <View style={styles.flex}>
-                <Text style={uiStyles.strong}>{member.displayName}</Text>
-                <Text style={uiStyles.muted}>{member.relationship}</Text>
-                <Text style={styles.capabilities}>
-                  {member.capabilities
-                    .map((item) => item.charAt(0) + item.slice(1).toLowerCase())
-                    .join(" • ")}
-                </Text>
-              </View>
-              <View style={styles.trailing}>
-                {member.availableLabel ? (
-                  <Pill label={member.availableLabel} />
-                ) : null}
-                <MaterialCommunityIcons
-                  name="chevron-right"
-                  size={24}
-                  color={colors.muted}
-                />
-              </View>
-            </Pressable>
-          ))}
-        </Card>
-      ) : data.invitations.length ? (
-        <View style={styles.invites}>
-          {data.invitations.map((invitation) => (
-            <Card key={invitation.id} style={styles.invite}>
-              <View style={styles.flex}>
-                <Text style={uiStyles.strong}>{invitation.email}</Text>
-                <Text style={uiStyles.muted}>
-                  {invitation.relationship} · {invitation.status.toLowerCase()}
-                </Text>
-                <Text style={styles.capabilities}>
-                  {invitation.status === "PENDING"
-                    ? `Expires ${formatDistanceToNow(new Date(invitation.expiresAt), { addSuffix: true })}`
-                    : invitation.capabilities.join(" • ")}
-                </Text>
-              </View>
-              {invitation.status === "PENDING" ? (
-                <View style={styles.inviteActions}>
-                  <Button
-                    label="Resend"
-                    variant="secondary"
-                    onPress={() =>
-                      router.push({
-                        pathname: "/invite",
-                        params: {
-                          email: invitation.email,
-                          relationship: invitation.relationship,
-                          resend: invitation.id,
-                        },
-                      })
-                    }
-                  />
-                  <Button
-                    label="Revoke"
-                    variant="danger"
-                    onPress={() => data.revokeInvitation(invitation.id)}
+      <ScrollView
+        style={styles.listScroll}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {section === "members" ? (
+          <Card style={styles.list}>
+            {members.map((member, index) => (
+              <Pressable
+                key={member.id}
+                accessibilityRole="button"
+                accessibilityLabel={`View ${member.displayName}`}
+                onPress={() =>
+                  router.push({
+                    pathname: "/member/[id]",
+                    params: { id: member.id },
+                  })
+                }
+                style={[
+                  styles.member,
+                  index < members.length - 1 && styles.border,
+                ]}
+              >
+                <Avatar name={member.displayName} uri={member.avatarUrl} />
+                <View style={styles.flex}>
+                  <Text style={uiStyles.strong}>{member.displayName}</Text>
+                  <Text style={uiStyles.muted}>{member.relationship}</Text>
+                  <Text style={styles.capabilities}>
+                    {member.capabilities
+                      .map(
+                        (item) => item.charAt(0) + item.slice(1).toLowerCase(),
+                      )
+                      .join(" • ")}
+                  </Text>
+                </View>
+                <View style={styles.trailing}>
+                  {member.availableLabel ? (
+                    <Pill label={member.availableLabel} />
+                  ) : null}
+                  <MaterialCommunityIcons
+                    name="chevron-right"
+                    size={24}
+                    color={colors.muted}
                   />
                 </View>
-              ) : null}
-            </Card>
-          ))}
-        </View>
-      ) : (
-        <EmptyState
-          icon="email-outline"
-          title="No invitations yet"
-          body="Invite a trusted caregiver when you’re ready."
-        />
-      )}
+              </Pressable>
+            ))}
+          </Card>
+        ) : data.invitations.length ? (
+          <View style={styles.invites}>
+            {data.invitations.map((invitation) => (
+              <Card key={invitation.id} style={styles.invite}>
+                <View style={styles.flex}>
+                  <Text style={uiStyles.strong}>{invitation.email}</Text>
+                  <Text style={uiStyles.muted}>
+                    {invitation.relationship} ·{" "}
+                    {invitation.status.toLowerCase()}
+                  </Text>
+                  <Text style={styles.capabilities}>
+                    {invitation.status === "PENDING"
+                      ? `Expires ${formatDistanceToNow(new Date(invitation.expiresAt), { addSuffix: true })}`
+                      : invitation.capabilities.join(" • ")}
+                  </Text>
+                </View>
+                {invitation.status === "PENDING" ? (
+                  <View style={styles.inviteActions}>
+                    <Button
+                      label="Resend"
+                      variant="secondary"
+                      onPress={() =>
+                        router.push({
+                          pathname: "/invite",
+                          params: {
+                            email: invitation.email,
+                            relationship: invitation.relationship,
+                            resend: invitation.id,
+                          },
+                        })
+                      }
+                    />
+                    <Button
+                      label="Revoke"
+                      variant="danger"
+                      onPress={() => data.revokeInvitation(invitation.id)}
+                    />
+                  </View>
+                ) : null}
+              </Card>
+            ))}
+          </View>
+        ) : (
+          <EmptyState
+            icon="email-outline"
+            title="No invitations yet"
+            body="Invite a trusted caregiver when you’re ready."
+          />
+        )}
+      </ScrollView>
       {canManage ? (
         <Button
           label="Invite Someone"
@@ -165,6 +174,9 @@ export default function VillageScreen() {
   );
 }
 const styles = StyleSheet.create({
+  screen: { gap: spacing.sm, paddingBottom: spacing.sm },
+  listScroll: { flex: 1 },
+  listContent: { paddingBottom: spacing.sm },
   add: {
     width: 42,
     height: 42,

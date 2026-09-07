@@ -1,6 +1,13 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
-import { Pressable, Share, StyleSheet, Text, View } from "react-native";
+import {
+  Pressable,
+  ScrollView,
+  Share,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { AppHeader, Button, Card, Field, Screen } from "@/src/components/ui";
 import type { Capability, MemberRole } from "@/src/domain/types";
 import { useVillage } from "@/src/providers/VillageProvider";
@@ -88,20 +95,44 @@ export default function InviteScreen() {
     }
   }
   return (
-    <Screen>
+    <Screen style={styles.screen}>
       <AppHeader
         title={params.resend ? "Resend Invitation" : "Invite Someone"}
         subtitle="Only invite people you trust with your child’s care."
       />
       <Card style={styles.form}>
+        <View style={styles.fieldRow}>
+          <View style={styles.halfField}>
+            <Field
+              label="Name"
+              value={name}
+              onChangeText={setName}
+              placeholder="Grandma"
+            />
+          </View>
+          <View style={styles.halfField}>
+            <Field
+              label="Relationship"
+              value={relationship}
+              onChangeText={setRelationship}
+              placeholder="Grandmother"
+            />
+          </View>
+        </View>
         <Field
-          label="Name"
-          value={name}
-          onChangeText={setName}
-          placeholder="Grandma"
+          label="Email"
+          value={email}
+          onChangeText={setEmail}
+          placeholder="caregiver@example.com"
+          autoCapitalize="none"
+          keyboardType="email-address"
         />
         <Text style={styles.label}>Access preset</Text>
-        <View style={styles.options}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.options}
+        >
           {(
             [
               ["PARENT_GUARDIAN", "Parent / guardian"],
@@ -126,9 +157,13 @@ export default function InviteScreen() {
               </Text>
             </Pressable>
           ))}
-        </View>
+        </ScrollView>
         <Text style={styles.label}>Children</Text>
-        <View style={styles.options}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.options}
+        >
           {data.children
             .filter((child) => !child.archived)
             .map((child) => {
@@ -156,9 +191,13 @@ export default function InviteScreen() {
                 </Pressable>
               );
             })}
-        </View>
+        </ScrollView>
         <Text style={styles.label}>Can help with</Text>
-        <View style={styles.options}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.options}
+        >
           {(
             [
               "PICKUP",
@@ -192,21 +231,7 @@ export default function InviteScreen() {
               </Pressable>
             );
           })}
-        </View>
-        <Field
-          label="Email"
-          value={email}
-          onChangeText={setEmail}
-          placeholder="caregiver@example.com"
-          autoCapitalize="none"
-          keyboardType="email-address"
-        />
-        <Field
-          label="Relationship"
-          value={relationship}
-          onChangeText={setRelationship}
-          placeholder="Grandmother, friend, babysitter…"
-        />
+        </ScrollView>
         <Text style={styles.permission}>
           Initial access: assigned children, schedule details for their
           responsibilities, and handoff participation. Owners can refine
@@ -237,11 +262,14 @@ export default function InviteScreen() {
   );
 }
 const styles = StyleSheet.create({
-  form: { gap: 16 },
+  screen: { gap: spacing.sm, paddingBottom: spacing.md },
+  form: { gap: spacing.sm, padding: 12 },
+  fieldRow: { flexDirection: "row", gap: spacing.sm },
+  halfField: { flex: 1, minWidth: 0 },
   label: { color: colors.ink, fontWeight: "800", fontSize: 14 },
-  options: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
+  options: { gap: spacing.sm, paddingRight: spacing.md },
   option: {
-    minHeight: 42,
+    minHeight: 40,
     justifyContent: "center",
     paddingHorizontal: 12,
     borderWidth: 1,
@@ -252,6 +280,6 @@ const styles = StyleSheet.create({
   selected: { backgroundColor: colors.forest, borderColor: colors.forest },
   optionText: { color: colors.ink, fontWeight: "600" },
   selectedText: { color: "#fff" },
-  permission: { color: colors.muted, fontSize: 13, lineHeight: 19 },
+  permission: { color: colors.muted, fontSize: 11, lineHeight: 16 },
   error: { color: colors.danger, fontSize: 13 },
 });
