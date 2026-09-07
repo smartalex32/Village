@@ -1,15 +1,7 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import {
-  AppHeader,
-  Avatar,
-  Button,
-  Card,
-  Screen,
-  uiStyles,
-} from "@/src/components/ui";
-import { useAuth } from "@/src/providers/AuthProvider";
+import { AppHeader, Avatar, Card, Screen, uiStyles } from "@/src/components/ui";
 import { useVillage } from "@/src/providers/VillageProvider";
 import { colors, spacing } from "@/src/theme/tokens";
 
@@ -23,7 +15,6 @@ function age(birthDate?: string) {
 export default function FamilyScreen() {
   const router = useRouter();
   const data = useVillage();
-  const auth = useAuth();
   const children = data.children.filter((child) => !child.archived);
   const currentMember = data.members.find(
     (member) => member.id === data.currentMemberId,
@@ -111,14 +102,6 @@ export default function FamilyScreen() {
           </Pressable>
         ) : null}
       </ScrollView>
-      <Button
-        label="Sign Out"
-        variant="ghost"
-        onPress={async () => {
-          await auth.signOut();
-          router.replace("/");
-        }}
-      />
     </Screen>
   );
 }

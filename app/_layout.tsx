@@ -48,6 +48,7 @@ function Navigation() {
         <Stack.Screen name="child-form" options={{ presentation: "modal" }} />
         <Stack.Screen name="handoff-form" options={{ presentation: "modal" }} />
         <Stack.Screen name="invite" options={{ presentation: "modal" }} />
+        <Stack.Screen name="account" />
         <Stack.Screen name="notifications" />
         <Stack.Screen name="handoff/[id]" />
         <Stack.Screen name="child/[id]" />

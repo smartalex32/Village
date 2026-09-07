@@ -74,23 +74,37 @@ export default function TodayScreen() {
         title="Today"
         subtitle={`Good morning, ${currentMember?.displayName ?? "there"}. You’ve got this.`}
         right={
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`${unread} unread notifications`}
-            onPress={() => router.push("/notifications")}
-            style={styles.bell}
-          >
-            <MaterialCommunityIcons
-              name="bell-outline"
-              size={24}
-              color={colors.ink}
-            />
-            {unread ? (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{unread}</Text>
-              </View>
-            ) : null}
-          </Pressable>
+          <View style={styles.headerActions}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open account"
+              onPress={() => router.push("/account")}
+              style={styles.headerButton}
+            >
+              <MaterialCommunityIcons
+                name="account-circle-outline"
+                size={25}
+                color={colors.ink}
+              />
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`${unread} unread notifications`}
+              onPress={() => router.push("/notifications")}
+              style={styles.headerButton}
+            >
+              <MaterialCommunityIcons
+                name="bell-outline"
+                size={24}
+                color={colors.ink}
+              />
+              {unread ? (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{unread}</Text>
+                </View>
+              ) : null}
+            </Pressable>
+          </View>
         }
       />
 
@@ -393,7 +407,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   flex: { flex: 1 },
-  bell: {
+  headerActions: { flexDirection: "row", alignItems: "center" },
+  headerButton: {
     width: 44,
     height: 44,
     alignItems: "center",

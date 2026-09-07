@@ -1,14 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import {
-  AppHeader,
-  Avatar,
-  BackButton,
-  Button,
-  Field,
-  Screen,
-} from "@/src/components/ui";
+import { AppHeader, Avatar, Button, Field, Screen } from "@/src/components/ui";
 import type { Capability } from "@/src/domain/types";
 import { useVillage } from "@/src/providers/VillageProvider";
 import { colors, radius, spacing } from "@/src/theme/tokens";
@@ -69,17 +62,12 @@ export default function HelpRequestScreen() {
   }
   return (
     <Screen style={styles.screen}>
-      <BackButton onPress={() => router.back()} />
       <AppHeader
         title="Ask for Help"
         subtitle="Send a request to your village."
       />
       <Text style={styles.label}>What type of help is needed?</Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.horizontalOptions}
-      >
+      <View style={styles.helpTypes}>
         {types.map((item) => (
           <Pressable
             key={item.value}
@@ -101,7 +89,7 @@ export default function HelpRequestScreen() {
             </Text>
           </Pressable>
         ))}
-      </ScrollView>
+      </View>
       <Text style={styles.label}>Which child?</Text>
       <View style={styles.chips}>
         {activeChildren.map((child) => (
@@ -186,12 +174,22 @@ export default function HelpRequestScreen() {
         placeholder="Anything they need to know?"
         style={styles.notes}
       />
-      <Button
-        label="Ask My Village"
-        onPress={submit}
-        disabled={!childId || !location.trim() || !recipientIds.length}
-      />
-      <Button label="Cancel" variant="ghost" onPress={() => router.back()} />
+      <View style={styles.actions}>
+        <View style={styles.actionButton}>
+          <Button
+            label="Ask My Village"
+            onPress={submit}
+            disabled={!childId || !location.trim() || !recipientIds.length}
+          />
+        </View>
+        <View style={styles.actionButton}>
+          <Button
+            label="Cancel"
+            variant="secondary"
+            onPress={() => router.back()}
+          />
+        </View>
+      </View>
     </Screen>
   );
 }
@@ -199,6 +197,7 @@ const styles = StyleSheet.create({
   screen: { gap: spacing.sm, paddingBottom: spacing.md },
   label: { color: colors.ink, fontWeight: "800", fontSize: 14 },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
+  helpTypes: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
   horizontalOptions: { gap: spacing.sm, paddingRight: spacing.md },
   fieldRow: { flexDirection: "row", gap: spacing.sm },
   halfField: { flex: 1, minWidth: 0 },
@@ -247,4 +246,6 @@ const styles = StyleSheet.create({
   check: { color: colors.forest, fontWeight: "900", fontSize: 18 },
   empty: { color: colors.muted, fontStyle: "italic" },
   notes: { minHeight: 62 },
+  actions: { flexDirection: "row", gap: spacing.sm },
+  actionButton: { flex: 1 },
 });

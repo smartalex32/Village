@@ -55,6 +55,12 @@ Tap the center **+** button when you need to act quickly.
 
 ![Quick actions menu](images/10-quick-actions.png)
 
+### View your account or sign out
+
+Tap the account icon beside the notification bell on Today to review your profile, household, and timezone. **Sign Out** is at the bottom of the Account screen.
+
+![Account screen](images/14-account.png)
+
 ## 3. Use the Today dashboard
 
 Today is the household’s compact coordination overview. It always shows each child’s most recently acknowledged caregiver, at least the next available event on today’s schedule, and at least one coverage gap or help request when attention is needed. Otherwise, it confirms that everything is covered. Larger screens show additional schedule and attention items when space permits. Tap **See all** beside Today’s schedule to switch to the full Schedule tab.
@@ -141,13 +147,13 @@ Removing a member ends their access immediately. Village also unassigns their fu
 Use a structured help request when an event needs a caregiver.
 
 1. Tap **Find Help** on a coverage gap, or choose **Ask for Help** from the center **+** quick-actions button.
-2. Choose the help type and child.
+2. Choose the help type and child. Select **Other** when pickup, dropoff, babysitting, or transportation does not describe the request.
 3. Confirm the date, time, and location.
 4. Select one or more eligible caregivers.
 5. Add an optional care note.
 6. Tap **Ask My Village** and confirm the summary.
 
-Tap **Back** or **Cancel** to leave without sending a request.
+Tap **Cancel** to return without sending a request.
 
 ![Ask for Help screen](images/09-help-request.png)
 
