@@ -24,6 +24,20 @@ type Capability =
   | "BABYSITTING"
   | "EMERGENCY"
   | "OTHER";
+type VillagePlanType =
+  | "TRIAL"
+  | "MONTHLY"
+  | "ANNUAL"
+  | "LIFETIME_FOUNDING_1"
+  | "LIFETIME_FOUNDING_2";
+type VillageEntitlementStatus =
+  | "TRIALING"
+  | "ACTIVE"
+  | "PAST_DUE"
+  | "GRACE_PERIOD"
+  | "EXPIRED"
+  | "LIFETIME"
+  | "CANCELLED";
 
 export type Database = {
   public: {
@@ -53,6 +67,69 @@ export type Database = {
         status: "ACTIVE" | "REMOVED";
         joined_at: string;
         removed_at: string | null;
+      }>;
+      billing_settings: Table<{
+        id: boolean;
+        trial_days: number;
+        grace_days: number;
+        founding_total_limit: number;
+        founding_offer_available: boolean;
+        updated_at: string;
+      }>;
+      billing_catalog: Table<{
+        plan_type: VillagePlanType;
+        billing_interval: "MONTH" | "YEAR" | "LIFETIME" | null;
+        amount_minor: number;
+        currency: string;
+        provider_name: string | null;
+        provider_product_id: string | null;
+        provider_price_id: string | null;
+        founding_quantity_limit: number | null;
+        available: boolean;
+        updated_at: string;
+      }>;
+      village_entitlements: Table<{
+        household_id: string;
+        plan_type: VillagePlanType;
+        lifecycle_status: VillageEntitlementStatus;
+        trial_started_at: string | null;
+        trial_ends_at: string | null;
+        paid_period_started_at: string | null;
+        paid_period_ends_at: string | null;
+        cancelled_at: string | null;
+        effective_ends_at: string | null;
+        grace_expires_at: string | null;
+        provider_name: string | null;
+        provider_customer_id: string | null;
+        provider_subscription_id: string | null;
+        provider_product_id: string | null;
+        provider_price_id: string | null;
+        founding_cohort: number | null;
+        founding_allocation_number: number | null;
+        founding_purchased_at: string | null;
+        last_provider_event_id: string | null;
+        last_provider_event_created_at: string | null;
+        provider_state_updated_at: string | null;
+        last_reconciled_at: string | null;
+        version: number;
+        created_at: string;
+        updated_at: string;
+      }>;
+      village_entitlement_events: Table<{
+        id: string;
+        household_id: string;
+        entitlement_version: number;
+        event_type: string;
+        provider_name: string | null;
+        provider_event_id: string | null;
+        provider_event_created_at: string | null;
+        previous_plan_type: VillagePlanType | null;
+        plan_type: VillagePlanType;
+        previous_lifecycle_status: VillageEntitlementStatus | null;
+        lifecycle_status: VillageEntitlementStatus;
+        effective_at: string;
+        event_data: Json;
+        recorded_at: string;
       }>;
       children: Table<{
         id: string;
@@ -268,6 +345,20 @@ export type Database = {
         Args: Record<string, never>;
         Returns: number;
       };
+      is_village_entitled: {
+        Args: { p_household_id: string; p_at?: string };
+        Returns: boolean;
+      };
+      get_village_entitlement_summary: {
+        Args: { p_household_id: string; p_at?: string };
+        Returns: {
+          household_id: string;
+          plan_type: VillagePlanType;
+          lifecycle_status: VillageEntitlementStatus;
+          is_entitled: boolean;
+          access_expires_at: string | null;
+        }[];
+      };
     };
     Enums: {
       member_role: MemberRole;
@@ -281,6 +372,9 @@ export type Database = {
       handoff_status: "SCHEDULED" | "READY" | "COMPLETED" | "CANCELLED";
       delivery_channel: "PUSH" | "EMAIL";
       delivery_status: "PENDING" | "PROCESSING" | "DELIVERED" | "FAILED";
+      village_plan_type: VillagePlanType;
+      village_entitlement_status: VillageEntitlementStatus;
+      billing_interval: "MONTH" | "YEAR" | "LIFETIME";
     };
     CompositeTypes: Record<string, never>;
   };
