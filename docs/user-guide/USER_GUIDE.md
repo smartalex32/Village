@@ -57,7 +57,7 @@ Tap the center **+** button when you need to act quickly.
 
 ## 3. Use the Today dashboard
 
-Today is the household’s coordination overview. For each child it shows the most recently acknowledged caregiver, the next handoff, today’s events, pending requests, and any schedule item that still needs coverage.
+Today is the household’s compact coordination overview. It shows each child’s most recently acknowledged caregiver, the next handoff, the next event on today’s schedule, and the highest-priority coverage gap or help request. Tap **See all** beside Today’s schedule to switch to the full Schedule tab.
 
 ![Today dashboard](images/03-today.png)
 
@@ -98,7 +98,7 @@ Each child profile includes basic information, care notes, the next handoff, and
 
 1. Open **Family** and select the child.
 2. Tap **Edit Profile**.
-3. Update the child’s name, birth date, avatar, or care notes.
+3. Update the child’s name, birth date, avatar, or care notes. You can enter a birth date as `YYYYMMDD`; Village adds the hyphens when you leave the field.
 4. Save your changes.
 
 Use care notes for concise information a permitted caregiver needs. Avoid storing information that is not needed for care coordination.
@@ -140,7 +140,7 @@ Removing a member ends their access immediately. Village also unassigns their fu
 
 Use a structured help request when an event needs a caregiver.
 
-1. Tap **Ask for Help** on Today, **Find Help** on a coverage gap, or **Start** in quick actions.
+1. Tap **Find Help** on a coverage gap, or choose **Ask for Help** from the center **+** quick-actions button.
 2. Choose the help type and child.
 3. Confirm the date, time, and location.
 4. Select one or more eligible caregivers.
@@ -161,7 +161,7 @@ A handoff records the transfer of care responsibility from one household member 
 
 ### Create a handoff
 
-1. Tap **Create Handoff** from Today or quick actions.
+1. Tap the center **+** button and choose **Create Handoff**.
 2. Choose the child, sender, and receiver.
 3. Confirm the time and location.
 4. Add checklist items and a short note.

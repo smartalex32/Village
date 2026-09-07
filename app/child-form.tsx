@@ -2,9 +2,17 @@ import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { AppHeader, Avatar, Button, Field, Screen } from "@/src/components/ui";
+import {
+  AppHeader,
+  Avatar,
+  Button,
+  DateField,
+  Field,
+  Screen,
+} from "@/src/components/ui";
 import { useVillage } from "@/src/providers/VillageProvider";
 import { colors, spacing } from "@/src/theme/tokens";
+import { formatDateInput, isValidDateInput } from "@/src/lib/dateInput";
 
 export default function ChildFormScreen() {
   const router = useRouter();
@@ -17,6 +25,7 @@ export default function ChildFormScreen() {
   const [avatarUri, setAvatarUri] = useState(existing?.avatarUrl);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [birthDateError, setBirthDateError] = useState("");
 
   async function chooseAvatar() {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -34,11 +43,19 @@ export default function ChildFormScreen() {
   }
 
   async function save() {
-    setSaving(true);
     setError("");
+    const formattedBirthDate = formatDateInput(birthDate);
+    setBirthDate(formattedBirthDate);
+    if (!isValidDateInput(formattedBirthDate)) {
+      setBirthDateError("Enter a real date as YYYY-MM-DD or YYYYMMDD.");
+      return;
+    }
+
+    setBirthDateError("");
+    setSaving(true);
     const input = {
       firstName: firstName.trim(),
-      birthDate: birthDate || undefined,
+      birthDate: formattedBirthDate || undefined,
       notes: notes || undefined,
     };
     try {
@@ -74,12 +91,23 @@ export default function ChildFormScreen() {
         onChangeText={setFirstName}
         placeholder="First name"
       />
-      <Field
+      <DateField
         label="Birth date (optional)"
         value={birthDate}
-        onChangeText={setBirthDate}
-        placeholder="YYYY-MM-DD"
-        keyboardType="numbers-and-punctuation"
+        onChangeText={(value) => {
+          setBirthDate(value);
+          if (birthDateError) setBirthDateError("");
+        }}
+        onBlur={() => {
+          const formatted = formatDateInput(birthDate);
+          setBirthDateError(
+            isValidDateInput(formatted)
+              ? ""
+              : "Enter a real date as YYYY-MM-DD or YYYYMMDD.",
+          );
+        }}
+        placeholder="YYYYMMDD"
+        error={birthDateError}
       />
       <Field
         label="Basic care notes (optional)"

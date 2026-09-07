@@ -1,7 +1,14 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { AppHeader, Avatar, Button, Field, Screen } from "@/src/components/ui";
+import {
+  AppHeader,
+  Avatar,
+  BackButton,
+  Button,
+  Field,
+  Screen,
+} from "@/src/components/ui";
 import type { Capability } from "@/src/domain/types";
 import { useVillage } from "@/src/providers/VillageProvider";
 import { colors, radius, spacing } from "@/src/theme/tokens";
@@ -62,6 +69,7 @@ export default function HelpRequestScreen() {
   }
   return (
     <Screen>
+      <BackButton onPress={() => router.back()} />
       <AppHeader
         title="Ask for Help"
         subtitle="Send a request to your village."

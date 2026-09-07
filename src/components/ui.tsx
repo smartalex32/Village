@@ -16,6 +16,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, radius, shadow, spacing } from "@/src/theme/tokens";
 import { initials } from "@/src/domain/rules";
+import { formatDateInput } from "@/src/lib/dateInput";
 
 export function Screen({
   children,
@@ -72,6 +73,25 @@ export function AppHeader({
       </View>
       {right}
     </View>
+  );
+}
+
+export function BackButton({ onPress }: { onPress: () => void }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Back"
+      onPress={onPress}
+      hitSlop={8}
+      style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
+    >
+      <MaterialCommunityIcons
+        name="arrow-left"
+        size={22}
+        color={colors.forest}
+      />
+      <Text style={styles.backButtonText}>Back</Text>
+    </Pressable>
   );
 }
 
@@ -199,6 +219,28 @@ export function Field({
   );
 }
 
+export function DateField({
+  value = "",
+  onChangeText,
+  onBlur,
+  ...props
+}: TextInputProps & { label: string; error?: string }) {
+  return (
+    <Field
+      {...props}
+      value={value}
+      onChangeText={onChangeText}
+      onBlur={(event) => {
+        const formatted = formatDateInput(value);
+        if (formatted !== value) onChangeText?.(formatted);
+        onBlur?.(event);
+      }}
+      inputMode="numeric"
+      maxLength={10}
+    />
+  );
+}
+
 export function Pill({
   label,
   tone = "green",
@@ -271,6 +313,15 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     marginBottom: spacing.xs,
   },
+  backButton: {
+    minHeight: 44,
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingRight: spacing.sm,
+  },
+  backButtonText: { color: colors.forest, fontSize: 16, fontWeight: "700" },
   title: {
     color: colors.ink,
     fontSize: 30,
