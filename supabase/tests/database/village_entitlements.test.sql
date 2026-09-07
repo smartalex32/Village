@@ -122,12 +122,17 @@ select is(
   'trial provisioning writes audit history'
 );
 
+select set_config(
+  'test.village_id',
+  (select id::text from public.households where name = 'Entitlement Test Village'),
+  true
+);
 set local role authenticated;
 select ok(
   (
     select is_entitled and plan_type = 'TRIAL' and lifecycle_status = 'TRIALING'
     from public.get_village_entitlement_summary(
-      (select id from public.households where name = 'Entitlement Test Village'),
+      current_setting('test.village_id')::uuid,
       now()
     )
   ),
@@ -154,7 +159,7 @@ select ok(
   (
     select is_entitled
     from public.get_village_entitlement_summary(
-      (select id from public.households where name = 'Entitlement Test Village'),
+      current_setting('test.village_id')::uuid,
       now()
     )
   ),
