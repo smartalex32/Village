@@ -1,19 +1,25 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import {
+  BookOpen,
+  BriefcaseMedical,
+  CalendarDays,
+  Car,
+  CarFront,
+  GraduationCap,
+  type LucideIcon,
+  Trophy,
+} from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { CareEvent, Child, VillageMember } from "@/src/domain/types";
 import { colors, spacing } from "@/src/theme/tokens";
 import { formatHouseholdDate } from "@/src/lib/dateTime";
 
-const eventIcons: Record<
-  string,
-  React.ComponentProps<typeof MaterialCommunityIcons>["name"]
-> = {
-  PICKUP: "car",
-  DROPOFF: "car-arrow-right",
-  APPOINTMENT: "medical-bag",
-  ACTIVITY: "soccer",
-  SCHOOL: "school",
-  OTHER: "book-open-page-variant",
+const eventIcons: Record<string, LucideIcon> = {
+  PICKUP: Car,
+  DROPOFF: CarFront,
+  APPOINTMENT: BriefcaseMedical,
+  ACTIVITY: Trophy,
+  SCHOOL: GraduationCap,
+  OTHER: BookOpen,
 };
 
 export function EventRow({
@@ -30,6 +36,7 @@ export function EventRow({
   timeZone?: string;
 }) {
   const missing = event.requiresCaregiver && !caregiver;
+  const Icon = eventIcons[event.type] ?? CalendarDays;
   return (
     <Pressable
       accessibilityRole={onPress ? "button" : undefined}
@@ -49,11 +56,7 @@ export function EventRow({
         })}
       </Text>
       <View style={[styles.icon, missing && styles.iconAlert]}>
-        <MaterialCommunityIcons
-          name={eventIcons[event.type] ?? "calendar"}
-          size={19}
-          color={missing ? colors.danger : colors.forestDark}
-        />
+        <Icon size={19} color={missing ? colors.danger : colors.forestDark} />
       </View>
       <View style={styles.details}>
         <Text style={styles.title}>

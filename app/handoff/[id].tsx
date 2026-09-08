@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Check } from "lucide-react-native";
 import { format } from "date-fns";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -97,13 +97,7 @@ export default function HandoffDetailScreen() {
                 style={styles.checkRow}
               >
                 <View style={[styles.checkbox, item.ready && styles.checked]}>
-                  {item.ready ? (
-                    <MaterialCommunityIcons
-                      name="check"
-                      size={17}
-                      color="#fff"
-                    />
-                  ) : null}
+                  {item.ready ? <Check size={17} color="#fff" /> : null}
                 </View>
                 <Text
                   style={[styles.itemText, isClosed && styles.closed]}

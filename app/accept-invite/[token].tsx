@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { HouseHeart } from "lucide-react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
@@ -43,11 +43,7 @@ export default function AcceptInvitationScreen() {
         onBack={() => router.replace(user ? "/(tabs)" : "/")}
       />
       <View style={styles.hero}>
-        <MaterialCommunityIcons
-          name="home-heart"
-          size={62}
-          color={colors.forest}
-        />
+        <HouseHeart size={62} color={colors.forest} />
         <Text style={styles.invitationNote}>
           This private invitation grants only the child and assignment access
           selected by the household owner.

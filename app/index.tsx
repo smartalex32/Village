@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { House, HouseHeart } from "lucide-react-native";
 import { Redirect, useRouter } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 import { Button, Screen } from "@/src/components/ui";
@@ -24,11 +24,7 @@ export default function WelcomeScreen() {
     <Screen scroll={false} style={styles.screen}>
       <View style={styles.hero}>
         <View style={styles.mark}>
-          <MaterialCommunityIcons
-            name="home-heart"
-            size={80}
-            color={colors.forest}
-          />
+          <HouseHeart size={80} color={colors.forest} />
         </View>
         <Text style={styles.logo}>Village</Text>
         <Text style={styles.tagline}>
@@ -39,12 +35,7 @@ export default function WelcomeScreen() {
         <View style={styles.sun} />
         <View style={styles.hillOne} />
         <View style={styles.hillTwo} />
-        <MaterialCommunityIcons
-          name="home"
-          size={74}
-          color="#F4E4D1"
-          style={styles.home}
-        />
+        <House size={74} color="#F4E4D1" style={styles.home} />
       </View>
       <View style={styles.actions}>
         <Button label="Get Started" onPress={() => router.push("/sign-up")} />

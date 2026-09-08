@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { ChevronRight, Plus } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { AppHeader, Avatar, Card, Screen, uiStyles } from "@/src/components/ui";
@@ -35,7 +35,7 @@ export default function FamilyScreen() {
               onPress={() => router.push("/child-form")}
               style={styles.add}
             >
-              <MaterialCommunityIcons name="plus" size={24} color="#fff" />
+              <Plus size={24} color="#fff" />
             </Pressable>
           ) : undefined
         }
@@ -72,11 +72,7 @@ export default function FamilyScreen() {
                     : "Child profile"}
                 </Text>
               </View>
-              <MaterialCommunityIcons
-                name="chevron-right"
-                size={26}
-                color={colors.muted}
-              />
+              <ChevronRight size={26} color={colors.muted} />
             </Card>
           </Pressable>
         ))}
@@ -88,11 +84,7 @@ export default function FamilyScreen() {
           >
             <Card style={styles.addChild}>
               <View style={styles.addCircle}>
-                <MaterialCommunityIcons
-                  name="plus"
-                  size={24}
-                  color={colors.forest}
-                />
+                <Plus size={24} color={colors.forest} />
               </View>
               <View>
                 <Text style={uiStyles.strong}>Add a child</Text>

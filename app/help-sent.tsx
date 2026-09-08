@@ -1,4 +1,10 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import {
+  CalendarDays,
+  CircleCheck,
+  CircleX,
+  MapPin,
+  PartyPopper,
+} from "lucide-react-native";
 import { format } from "date-fns";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
@@ -48,17 +54,13 @@ export default function HelpSentScreen() {
     <Screen style={styles.screen}>
       <AppHeader title={title} onBack={() => router.replace("/(tabs)")} />
       <View style={styles.success}>
-        <MaterialCommunityIcons
-          name={
-            request.status === "ASSIGNED" || request.status === "COMPLETED"
-              ? "check-circle"
-              : request.status === "CANCELLED"
-                ? "close-circle-outline"
-                : "party-popper"
-          }
-          size={58}
-          color={colors.forest}
-        />
+        {request.status === "ASSIGNED" || request.status === "COMPLETED" ? (
+          <CircleCheck size={58} color={colors.forest} />
+        ) : request.status === "CANCELLED" ? (
+          <CircleX size={58} color={colors.forest} />
+        ) : (
+          <PartyPopper size={58} color={colors.forest} />
+        )}
         <Text style={styles.subtitle}>
           {assigned
             ? `${assigned.displayName} can help.`
@@ -93,10 +95,16 @@ export default function HelpSentScreen() {
           />
           <Text style={uiStyles.strong}>{child?.firstName}</Text>
         </View>
-        <Text style={uiStyles.body}>
-          📅 {format(new Date(request.startsAt), "MMM d 'at' h:mm a")}
-        </Text>
-        <Text style={uiStyles.body}>⌖ {request.location}</Text>
+        <View style={[uiStyles.row, styles.detail]}>
+          <CalendarDays size={16} color={colors.ink} />
+          <Text style={uiStyles.body}>
+            {format(new Date(request.startsAt), "MMM d 'at' h:mm a")}
+          </Text>
+        </View>
+        <View style={[uiStyles.row, styles.detail]}>
+          <MapPin size={16} color={colors.ink} />
+          <Text style={uiStyles.body}>{request.location}</Text>
+        </View>
         {request.notes ? (
           <Text style={uiStyles.muted}>“{request.notes}”</Text>
         ) : null}
@@ -176,6 +184,7 @@ const styles = StyleSheet.create({
   summary: { gap: spacing.sm },
   type: { color: colors.ink, fontSize: 19, fontWeight: "800" },
   person: { gap: spacing.sm },
+  detail: { gap: spacing.xs },
   sent: { color: colors.ink, fontWeight: "800", marginTop: spacing.sm },
   recipient: { gap: spacing.sm },
   responseActions: { flexDirection: "row", gap: spacing.sm },
