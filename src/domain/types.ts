@@ -12,6 +12,75 @@ export type HelpRequestStatus = "OPEN" | "ASSIGNED" | "COMPLETED" | "CANCELLED";
 export type HandoffStatus = "SCHEDULED" | "READY" | "COMPLETED" | "CANCELLED";
 export type InvitationStatus =
   "PENDING" | "ACCEPTED" | "DECLINED" | "EXPIRED" | "REVOKED";
+export type VillagePlanType =
+  | "TRIAL"
+  | "MONTHLY"
+  | "ANNUAL"
+  | "LIFETIME_FOUNDING_1"
+  | "LIFETIME_FOUNDING_2";
+export type VillageEntitlementStatus =
+  | "TRIALING"
+  | "ACTIVE"
+  | "PAST_DUE"
+  | "GRACE_PERIOD"
+  | "EXPIRED"
+  | "LIFETIME"
+  | "CANCELLED";
+
+export interface VillageEntitlementSummary {
+  householdId: string;
+  planType: VillagePlanType;
+  lifecycleStatus: VillageEntitlementStatus;
+  isEntitled: boolean;
+  accessExpiresAt?: string;
+}
+
+export interface VillageEntitlement {
+  householdId: string;
+  planType: VillagePlanType;
+  lifecycleStatus: VillageEntitlementStatus;
+  trialStartedAt?: string;
+  trialEndsAt?: string;
+  paidPeriodStartedAt?: string;
+  paidPeriodEndsAt?: string;
+  cancelledAt?: string;
+  effectiveEndsAt?: string;
+  graceExpiresAt?: string;
+  providerName?: string;
+  providerCustomerId?: string;
+  providerSubscriptionId?: string;
+  providerProductId?: string;
+  providerPriceId?: string;
+  foundingCohort?: number;
+  foundingAllocationNumber?: number;
+  foundingPurchasedAt?: string;
+  lastProviderEventId?: string;
+  lastProviderEventCreatedAt?: string;
+  providerStateUpdatedAt?: string;
+  lastReconciledAt?: string;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BillingSettings {
+  trialDays: number;
+  graceDays: number;
+  foundingTotalLimit: number;
+  foundingOfferAvailable: boolean;
+}
+
+export interface BillingCatalogPlan {
+  planType: VillagePlanType;
+  billingInterval?: "MONTH" | "YEAR" | "LIFETIME";
+  amountMinor: number;
+  currency: string;
+  providerName?: string;
+  providerProductId?: string;
+  providerPriceId?: string;
+  foundingQuantityLimit?: number;
+  available: boolean;
+}
 
 export interface Child {
   id: string;
