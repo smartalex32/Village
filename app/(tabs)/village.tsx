@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { ChevronRight, Mail, Plus, UserPlus } from "lucide-react-native";
 import { formatDistanceToNow } from "date-fns";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -42,7 +42,7 @@ export default function VillageScreen() {
               onPress={() => router.push("/invite")}
               style={styles.add}
             >
-              <MaterialCommunityIcons name="plus" size={24} color="#fff" />
+              <Plus size={24} color="#fff" />
             </Pressable>
           ) : undefined
         }
@@ -103,11 +103,7 @@ export default function VillageScreen() {
                   {member.availableLabel ? (
                     <Pill label={member.availableLabel} />
                   ) : null}
-                  <MaterialCommunityIcons
-                    name="chevron-right"
-                    size={24}
-                    color={colors.muted}
-                  />
+                  <ChevronRight size={24} color={colors.muted} />
                 </View>
               </Pressable>
             ))}
@@ -156,7 +152,7 @@ export default function VillageScreen() {
           </View>
         ) : (
           <EmptyState
-            icon="email-outline"
+            icon={Mail}
             title="No invitations yet"
             body="Invite a trusted caregiver when you’re ready."
           />
@@ -166,7 +162,7 @@ export default function VillageScreen() {
         <Button
           label="Invite Someone"
           variant="secondary"
-          icon="account-plus"
+          icon={UserPlus}
           onPress={() => router.push("/invite")}
         />
       ) : null}

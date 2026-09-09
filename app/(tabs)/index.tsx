@@ -1,4 +1,14 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import {
+  ArrowRightLeft,
+  Bell,
+  CalendarCheck,
+  CalendarClock,
+  ChevronRight,
+  CircleCheck,
+  CircleUserRound,
+  HandHeart,
+  TriangleAlert,
+} from "lucide-react-native";
 import { useRouter } from "expo-router";
 import {
   Pressable,
@@ -81,11 +91,7 @@ export default function TodayScreen() {
               onPress={() => router.push("/account")}
               style={styles.headerButton}
             >
-              <MaterialCommunityIcons
-                name="account-circle-outline"
-                size={25}
-                color={colors.ink}
-              />
+              <CircleUserRound size={25} color={colors.ink} />
             </Pressable>
             <Pressable
               accessibilityRole="button"
@@ -93,11 +99,7 @@ export default function TodayScreen() {
               onPress={() => router.push("/notifications")}
               style={styles.headerButton}
             >
-              <MaterialCommunityIcons
-                name="bell-outline"
-                size={24}
-                color={colors.ink}
-              />
+              <Bell size={24} color={colors.ink} />
               {unread ? (
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>{unread}</Text>
@@ -181,11 +183,7 @@ export default function TodayScreen() {
                     }
                     style={styles.nextHandoff}
                   >
-                    <MaterialCommunityIcons
-                      name="account-switch-outline"
-                      size={17}
-                      color={colors.forest}
-                    />
+                    <ArrowRightLeft size={17} color={colors.forest} />
                     <View style={styles.flex}>
                       <Text style={styles.nextHandoffTime} numberOfLines={1}>
                         Next ·{" "}
@@ -233,11 +231,7 @@ export default function TodayScreen() {
               style={[styles.scheduleCard, index > 0 && styles.scheduleDivider]}
             >
               <View style={styles.scheduleIcon}>
-                <MaterialCommunityIcons
-                  name="calendar-clock-outline"
-                  size={20}
-                  color={colors.forestDark}
-                />
+                <CalendarClock size={20} color={colors.forestDark} />
               </View>
               <View style={styles.flex}>
                 <Text style={styles.scheduleEyebrow}>
@@ -270,11 +264,7 @@ export default function TodayScreen() {
         </Card>
       ) : (
         <Card style={styles.allClearCard}>
-          <MaterialCommunityIcons
-            name="calendar-check-outline"
-            size={22}
-            color={colors.forest}
-          />
+          <CalendarCheck size={22} color={colors.forest} />
           <View style={styles.flex}>
             <Text style={styles.emptyTitle}>Today is wrapped up</Text>
             <Text style={uiStyles.muted}>No more scheduled care today.</Text>
@@ -289,11 +279,7 @@ export default function TodayScreen() {
             item.kind === "gap" ? (
               <Card key={`gap-${item.gap.id}`} style={styles.alert}>
                 <View style={styles.attentionRow}>
-                  <MaterialCommunityIcons
-                    name="alert-outline"
-                    size={22}
-                    color={colors.danger}
-                  />
+                  <TriangleAlert size={22} color={colors.danger} />
                   <View style={styles.flex}>
                     <Text style={styles.alertHeading} numberOfLines={1}>
                       {formatHouseholdDate(
@@ -348,11 +334,7 @@ export default function TodayScreen() {
                 }
               >
                 <Card style={styles.requestCard}>
-                  <MaterialCommunityIcons
-                    name="hand-heart-outline"
-                    size={22}
-                    color={colors.forest}
-                  />
+                  <HandHeart size={22} color={colors.forest} />
                   <View style={styles.flex}>
                     <Text style={styles.emptyTitle} numberOfLines={1}>
                       {
@@ -368,11 +350,7 @@ export default function TodayScreen() {
                         : "Waiting for a response. Tap for details."}
                     </Text>
                   </View>
-                  <MaterialCommunityIcons
-                    name="chevron-right"
-                    size={22}
-                    color={colors.muted}
-                  />
+                  <ChevronRight size={22} color={colors.muted} />
                 </Card>
               </Pressable>
             ),
@@ -380,11 +358,7 @@ export default function TodayScreen() {
         </View>
       ) : (
         <Card style={styles.allClearCard}>
-          <MaterialCommunityIcons
-            name="check-circle-outline"
-            size={22}
-            color={colors.forest}
-          />
+          <CircleCheck size={22} color={colors.forest} />
           <View style={styles.flex}>
             <Text style={styles.emptyTitle}>Everything is covered</Text>
             <Text style={uiStyles.muted}>

@@ -1,5 +1,5 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import type { ComponentProps, PropsWithChildren, ReactNode } from "react";
+import { ArrowLeft, type LucideIcon } from "lucide-react-native";
+import type { PropsWithChildren, ReactNode } from "react";
 import {
   Image,
   Pressable,
@@ -80,11 +80,7 @@ export function AppHeader({
             pressed && styles.pressed,
           ]}
         >
-          <MaterialCommunityIcons
-            name="arrow-left"
-            size={24}
-            color={colors.forest}
-          />
+          <ArrowLeft size={24} color={colors.forest} />
         </Pressable>
       ) : null}
       <View style={styles.flex}>
@@ -128,8 +124,9 @@ export function Button({
   onPress?: () => void;
   variant?: "primary" | "secondary" | "danger" | "ghost";
   disabled?: boolean;
-  icon?: ComponentProps<typeof MaterialCommunityIcons>["name"];
+  icon?: LucideIcon;
 }) {
+  const Icon = icon;
   return (
     <Pressable
       accessibilityRole="button"
@@ -143,9 +140,8 @@ export function Button({
         pressed && !disabled && styles.pressed,
       ]}
     >
-      {icon ? (
-        <MaterialCommunityIcons
-          name={icon}
+      {Icon ? (
+        <Icon
           size={20}
           color={
             variant === "primary"
@@ -268,15 +264,16 @@ export function EmptyState({
   body,
   action,
 }: {
-  icon: ComponentProps<typeof MaterialCommunityIcons>["name"];
+  icon: LucideIcon;
   title: string;
   body: string;
   action?: ReactNode;
 }) {
+  const Icon = icon;
   return (
     <View style={styles.empty}>
       <View style={styles.emptyIcon}>
-        <MaterialCommunityIcons name={icon} size={28} color={colors.forest} />
+        <Icon size={28} color={colors.forest} />
       </View>
       <Text style={styles.emptyTitle}>{title}</Text>
       <Text style={styles.emptyBody}>{body}</Text>

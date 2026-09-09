@@ -1,4 +1,9 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import {
+  CalendarPlus,
+  ChevronRight,
+  HandHeart,
+  Repeat2,
+} from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AppHeader, Card, Screen } from "@/src/components/ui";
@@ -29,7 +34,7 @@ export default function QuickActionsScreen() {
             onPress={() => router.replace("/help-request")}
           >
             <Card style={styles.action}>
-              <Text style={styles.icon}>🤝</Text>
+              <HandHeart size={28} color={colors.forest} />
               <View style={styles.copy}>
                 <Text style={styles.title}>Ask for Help</Text>
                 <Text style={styles.body} numberOfLines={2}>
@@ -37,11 +42,7 @@ export default function QuickActionsScreen() {
                   request.
                 </Text>
               </View>
-              <MaterialCommunityIcons
-                name="chevron-right"
-                size={24}
-                color={colors.muted}
-              />
+              <ChevronRight size={24} color={colors.muted} />
             </Card>
           </Pressable>
         ) : null}
@@ -51,18 +52,14 @@ export default function QuickActionsScreen() {
           onPress={() => router.replace("/handoff-form")}
         >
           <Card style={styles.action}>
-            <Text style={styles.icon}>🔁</Text>
+            <Repeat2 size={28} color={colors.forest} />
             <View style={styles.copy}>
               <Text style={styles.title}>Create Handoff</Text>
               <Text style={styles.body} numberOfLines={2}>
                 Prepare items and transfer responsibility to another caregiver.
               </Text>
             </View>
-            <MaterialCommunityIcons
-              name="chevron-right"
-              size={24}
-              color={colors.muted}
-            />
+            <ChevronRight size={24} color={colors.muted} />
           </Card>
         </Pressable>
         {canManage ? (
@@ -72,18 +69,14 @@ export default function QuickActionsScreen() {
             onPress={() => router.replace("/event-form")}
           >
             <Card style={styles.action}>
-              <Text style={styles.icon}>📅</Text>
+              <CalendarPlus size={28} color={colors.forest} />
               <View style={styles.copy}>
                 <Text style={styles.title}>Add Event</Text>
                 <Text style={styles.body} numberOfLines={2}>
                   Schedule a care responsibility or family activity.
                 </Text>
               </View>
-              <MaterialCommunityIcons
-                name="chevron-right"
-                size={24}
-                color={colors.muted}
-              />
+              <ChevronRight size={24} color={colors.muted} />
             </Card>
           </Pressable>
         ) : null}
@@ -101,7 +94,6 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     padding: 12,
   },
-  icon: { fontSize: 28 },
   copy: { flex: 1, gap: 3 },
   title: { color: colors.ink, fontSize: 17, fontWeight: "800" },
   body: { color: colors.muted, fontSize: 13, lineHeight: 18 },

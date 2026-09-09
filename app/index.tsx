@@ -1,6 +1,6 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { House } from "lucide-react-native";
 import { Redirect, useRouter } from "expo-router";
-import { StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 import { Button, Screen } from "@/src/components/ui";
 import { colors, spacing } from "@/src/theme/tokens";
 import { useAuth } from "@/src/providers/AuthProvider";
@@ -24,10 +24,10 @@ export default function WelcomeScreen() {
     <Screen scroll={false} style={styles.screen}>
       <View style={styles.hero}>
         <View style={styles.mark}>
-          <MaterialCommunityIcons
-            name="home-heart"
-            size={80}
-            color={colors.forest}
+          <Image
+            source={require("../assets/images/village-icon.png")}
+            accessibilityLabel="Village"
+            style={styles.markImage}
           />
         </View>
         <Text style={styles.logo}>Village</Text>
@@ -39,12 +39,7 @@ export default function WelcomeScreen() {
         <View style={styles.sun} />
         <View style={styles.hillOne} />
         <View style={styles.hillTwo} />
-        <MaterialCommunityIcons
-          name="home"
-          size={74}
-          color="#F4E4D1"
-          style={styles.home}
-        />
+        <House size={74} color="#F4E4D1" style={styles.home} />
       </View>
       <View style={styles.actions}>
         <Button label="Get Started" onPress={() => router.push("/sign-up")} />
@@ -68,6 +63,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 34,
   },
   mark: { marginBottom: 8 },
+  markImage: { width: 112, height: 112 },
   logo: {
     color: colors.forestDark,
     fontWeight: "900",

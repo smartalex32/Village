@@ -1,3 +1,4 @@
+import { Bell } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
@@ -78,7 +79,7 @@ export default function NotificationsScreen() {
         ))
       ) : (
         <EmptyState
-          icon="bell-outline"
+          icon={Bell}
           title="All caught up"
           body="Important requests and handoff updates will appear here."
         />

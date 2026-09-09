@@ -1,12 +1,18 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import {
+  CalendarDays,
+  ContactRound,
+  House,
+  Plus,
+  type LucideIcon,
+  UsersRound,
+} from "lucide-react-native";
 import { Tabs, useRouter } from "expo-router";
-import type { ComponentProps } from "react";
 import { ColorValue, Pressable, StyleSheet, View } from "react-native";
 import { colors, shadow } from "@/src/theme/tokens";
 
-function icon(name: ComponentProps<typeof MaterialCommunityIcons>["name"]) {
+function icon(Icon: LucideIcon) {
   function TabBarIcon({ color }: { color: ColorValue }) {
-    return <MaterialCommunityIcons name={name} size={23} color={color} />;
+    return <Icon size={23} color={color} />;
   }
   return TabBarIcon;
 }
@@ -25,13 +31,13 @@ export default function TabLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{ title: "Today", tabBarIcon: icon("home-variant") }}
+        options={{ title: "Today", tabBarIcon: icon(House) }}
       />
       <Tabs.Screen
         name="schedule"
         options={{
           title: "Schedule",
-          tabBarIcon: icon("calendar-blank-outline"),
+          tabBarIcon: icon(CalendarDays),
         }}
       />
       <Tabs.Screen
@@ -46,7 +52,7 @@ export default function TabLayout() {
               style={styles.fabWrap}
             >
               <View style={styles.fab}>
-                <MaterialCommunityIcons name="plus" size={30} color="#fff" />
+                <Plus size={30} color="#fff" />
               </View>
             </Pressable>
           ),
@@ -56,14 +62,14 @@ export default function TabLayout() {
         name="village"
         options={{
           title: "Village",
-          tabBarIcon: icon("account-group-outline"),
+          tabBarIcon: icon(UsersRound),
         }}
       />
       <Tabs.Screen
         name="family"
         options={{
           title: "Family",
-          tabBarIcon: icon("account-multiple-outline"),
+          tabBarIcon: icon(ContactRound),
         }}
       />
     </Tabs>
