@@ -63,9 +63,13 @@ export default function VillageScreen() {
               accessibilityRole="button"
               accessibilityLabel="Invite caregiver"
               onPress={() => router.push("/invite")}
-              style={styles.add}
+              style={styles.headerButton}
             >
-              <MaterialCommunityIcons name="plus" size={24} color="#fff" />
+              <MaterialCommunityIcons
+                name="account-plus"
+                size={24}
+                color={colors.forest}
+              />
             </Pressable>
           ) : undefined
         }
@@ -234,14 +238,6 @@ export default function VillageScreen() {
           </View>
         )}
       </ScrollView>
-      {canManage && section !== "helpTypes" ? (
-        <Button
-          label="Invite Someone"
-          variant="secondary"
-          icon="account-plus"
-          onPress={() => router.push("/invite")}
-        />
-      ) : null}
     </Screen>
   );
 }
@@ -249,11 +245,9 @@ const styles = StyleSheet.create({
   screen: { gap: spacing.sm, paddingBottom: spacing.sm },
   listScroll: { flex: 1 },
   listContent: { paddingBottom: spacing.sm },
-  add: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: colors.forest,
+  headerButton: {
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
   },

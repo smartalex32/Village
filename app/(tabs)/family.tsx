@@ -33,9 +33,13 @@ export default function FamilyScreen() {
               accessibilityRole="button"
               accessibilityLabel="Add child"
               onPress={() => router.push("/child-form")}
-              style={styles.add}
+              style={styles.headerButton}
             >
-              <MaterialCommunityIcons name="plus" size={24} color="#fff" />
+              <MaterialCommunityIcons
+                name="account-plus"
+                size={24}
+                color={colors.forest}
+              />
             </Pressable>
           ) : undefined
         }
@@ -80,27 +84,6 @@ export default function FamilyScreen() {
             </Card>
           </Pressable>
         ))}
-        {canManage ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Add another child"
-            onPress={() => router.push("/child-form")}
-          >
-            <Card style={styles.addChild}>
-              <View style={styles.addCircle}>
-                <MaterialCommunityIcons
-                  name="plus"
-                  size={24}
-                  color={colors.forest}
-                />
-              </View>
-              <View>
-                <Text style={uiStyles.strong}>Add a child</Text>
-                <Text style={uiStyles.muted}>Keep everyone in one place.</Text>
-              </View>
-            </Card>
-          </Pressable>
-        ) : null}
       </ScrollView>
     </Screen>
   );
@@ -109,11 +92,9 @@ const styles = StyleSheet.create({
   screen: { gap: spacing.sm, paddingBottom: spacing.sm },
   listScroll: { flex: 1 },
   listContent: { gap: spacing.md, paddingBottom: spacing.sm },
-  add: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: colors.forest,
+  headerButton: {
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -125,18 +106,4 @@ const styles = StyleSheet.create({
   },
   flex: { flex: 1 },
   name: { color: colors.ink, fontWeight: "800", fontSize: 20 },
-  addChild: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-    backgroundColor: colors.surfaceMuted,
-  },
-  addCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#D9E9E6",
-    alignItems: "center",
-    justifyContent: "center",
-  },
 });
