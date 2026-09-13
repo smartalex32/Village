@@ -124,7 +124,7 @@ The **Invitations** tab shows pending invitations. From there, a manager can res
 
 ### Invite a caregiver
 
-1. Tap **+** or **Invite Someone**.
+1. Tap the person-plus icon (**+**) in the Village header.
 2. Enter the caregiver’s name and email address.
 3. Choose an access preset:
    - **Parent / guardian** for broad household management.

@@ -3,9 +3,11 @@ import type {
   Child,
   Handoff,
   HelpRequest,
+  HelpRequestType,
   VillageMember,
   VillageNotification,
 } from "@/src/domain/types";
+import { defaultHelpRequestTypes } from "@/src/domain/helpTypes";
 
 function at(dayOffset: number, hour: number, minute = 0) {
   const date = new Date();
@@ -207,6 +209,8 @@ export const demoHandoffs: Handoff[] = [
 ];
 
 export const demoHelpRequests: HelpRequest[] = [];
+
+export const demoHelpRequestTypes: HelpRequestType[] = defaultHelpRequestTypes;
 
 export const demoNotifications: VillageNotification[] = [
   {

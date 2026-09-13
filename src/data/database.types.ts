@@ -198,14 +198,25 @@ export type Database = {
         created_by: string;
         created_at: string;
       }>;
+      help_request_types: Table<{
+        id: string;
+        household_id: string;
+        label: string;
+        capability: Capability | null;
+        is_other: boolean;
+        archived_at: string | null;
+        created_at: string;
+      }>;
       help_requests: Table<{
         id: string;
         household_id: string;
         child_id: string;
         event_id: string;
-        request_type: Capability;
+        request_type: string;
+        request_type_label: string;
         starts_at: string;
         location: string;
+        context: string | null;
         notes: string | null;
         status: "OPEN" | "ASSIGNED" | "COMPLETED" | "CANCELLED";
         assigned_member_id: string | null;

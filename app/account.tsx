@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   AppHeader,
   Avatar,
@@ -23,12 +24,16 @@ function roleLabel(role?: string) {
 
 export default function AccountScreen() {
   const router = useAppRouter();
+  const { bottom } = useSafeAreaInsets();
   const auth = useAuth();
   const data = useVillage();
   const member = data.members.find((item) => item.id === data.currentMemberId);
 
   return (
-    <Screen scroll={false} style={styles.screen}>
+    <Screen
+      scroll={false}
+      style={[styles.screen, { paddingBottom: spacing.md + bottom }]}
+    >
       <AppHeader
         title="Account"
         subtitle="Your Village profile and session."

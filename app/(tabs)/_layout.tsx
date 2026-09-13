@@ -1,9 +1,12 @@
+import { useAppRouter } from "@/src/lib/useAppRouter";
+import { colors, shadow } from "@/src/theme/tokens";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import type { ComponentProps } from "react";
 import { ColorValue, Pressable, StyleSheet, View } from "react-native";
-import { colors, shadow } from "@/src/theme/tokens";
-import { useAppRouter } from "@/src/lib/useAppRouter";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+const tabBarContentHeight = 56;
 
 function icon(name: ComponentProps<typeof MaterialCommunityIcons>["name"]) {
   function TabBarIcon({ color }: { color: ColorValue }) {
@@ -14,6 +17,7 @@ function icon(name: ComponentProps<typeof MaterialCommunityIcons>["name"]) {
 
 export default function TabLayout() {
   const router = useAppRouter();
+  const { bottom } = useSafeAreaInsets();
   return (
     <Tabs
       screenOptions={{
@@ -21,7 +25,7 @@ export default function TabLayout() {
         tabBarActiveTintColor: colors.forest,
         tabBarInactiveTintColor: "#687976",
         tabBarLabelStyle: { fontSize: 11, fontWeight: "700", paddingBottom: 4 },
-        tabBarStyle: styles.bar,
+        tabBarStyle: [styles.bar, { height: tabBarContentHeight + bottom }],
       }}
     >
       <Tabs.Screen
@@ -73,7 +77,7 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   bar: {
-    height: 72,
+    height: tabBarContentHeight,
     paddingTop: 7,
     backgroundColor: colors.surface,
     borderTopColor: colors.line,
