@@ -1,10 +1,10 @@
-import { useRouter } from "expo-router";
 import type { NotificationResponse } from "expo-notifications";
 import { useEffect } from "react";
 import { Platform } from "react-native";
+import { useAppRouter } from "@/src/lib/useAppRouter";
 
 export function useNotificationRouting() {
-  const router = useRouter();
+  const router = useAppRouter();
   useEffect(() => {
     if (Platform.OS === "web") return;
     let remove: (() => void) | undefined;

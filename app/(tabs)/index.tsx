@@ -1,5 +1,4 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import {
   Pressable,
   StyleSheet,
@@ -20,9 +19,10 @@ import { useVillage } from "@/src/providers/VillageProvider";
 import { formatHouseholdDate, householdDateKey } from "@/src/lib/dateTime";
 import { todaySummaryLimits } from "@/src/lib/todayLayout";
 import { colors, radius, spacing } from "@/src/theme/tokens";
+import { useAppRouter } from "@/src/lib/useAppRouter";
 
 export default function TodayScreen() {
-  const router = useRouter();
+  const router = useAppRouter();
   const data = useVillage();
   const { height } = useWindowDimensions();
   const activeChildren = data.children.filter((child) => !child.archived);

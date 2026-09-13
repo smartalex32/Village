@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import {
   AppHeader,
@@ -12,10 +12,11 @@ import {
 } from "@/src/components/ui";
 import { useVillage } from "@/src/providers/VillageProvider";
 import { colors, spacing } from "@/src/theme/tokens";
+import { useAppRouter } from "@/src/lib/useAppRouter";
 
 export default function MemberDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
+  const router = useAppRouter();
   const data = useVillage();
   const member = data.members.find((item) => item.id === id);
   const currentMember = data.members.find(

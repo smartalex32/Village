@@ -1,12 +1,12 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AppHeader, Card, Screen } from "@/src/components/ui";
 import { useVillage } from "@/src/providers/VillageProvider";
 import { colors, spacing } from "@/src/theme/tokens";
+import { useAppRouter } from "@/src/lib/useAppRouter";
 
 export default function QuickActionsScreen() {
-  const router = useRouter();
+  const router = useAppRouter();
   const data = useVillage();
   const currentMember = data.members.find(
     (member) => member.id === data.currentMemberId,

@@ -1,6 +1,5 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { formatDistanceToNow } from "date-fns";
-import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import {
@@ -15,9 +14,10 @@ import {
 } from "@/src/components/ui";
 import { useVillage } from "@/src/providers/VillageProvider";
 import { colors, radius, spacing } from "@/src/theme/tokens";
+import { useAppRouter } from "@/src/lib/useAppRouter";
 
 export default function VillageScreen() {
-  const router = useRouter();
+  const router = useAppRouter();
   const data = useVillage();
   const [section, setSection] = useState<"members" | "invitations">("members");
   const members = data.members.filter(

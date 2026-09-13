@@ -1,9 +1,9 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { AppHeader, Avatar, Card, Screen, uiStyles } from "@/src/components/ui";
 import { useVillage } from "@/src/providers/VillageProvider";
 import { colors, spacing } from "@/src/theme/tokens";
+import { useAppRouter } from "@/src/lib/useAppRouter";
 
 function age(birthDate?: string) {
   if (!birthDate) return null;
@@ -13,7 +13,7 @@ function age(birthDate?: string) {
   );
 }
 export default function FamilyScreen() {
-  const router = useRouter();
+  const router = useAppRouter();
   const data = useVillage();
   const children = data.children.filter((child) => !child.archived);
   const currentMember = data.members.find(

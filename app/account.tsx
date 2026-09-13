@@ -1,4 +1,3 @@
-import { useRouter } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 import {
   AppHeader,
@@ -11,6 +10,7 @@ import {
 import { useAuth } from "@/src/providers/AuthProvider";
 import { useVillage } from "@/src/providers/VillageProvider";
 import { colors, spacing } from "@/src/theme/tokens";
+import { useAppRouter } from "@/src/lib/useAppRouter";
 
 function roleLabel(role?: string) {
   if (!role) return "Household member";
@@ -22,7 +22,7 @@ function roleLabel(role?: string) {
 }
 
 export default function AccountScreen() {
-  const router = useRouter();
+  const router = useAppRouter();
   const auth = useAuth();
   const data = useVillage();
   const member = data.members.find((item) => item.id === data.currentMemberId);

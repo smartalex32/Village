@@ -1,13 +1,14 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Redirect, useRouter } from "expo-router";
+import { Redirect } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 import { Button, Screen } from "@/src/components/ui";
 import { colors, spacing } from "@/src/theme/tokens";
 import { useAuth } from "@/src/providers/AuthProvider";
 import { useVillage } from "@/src/providers/VillageProvider";
+import { useAppRouter } from "@/src/lib/useAppRouter";
 
 export default function WelcomeScreen() {
-  const router = useRouter();
+  const router = useAppRouter();
   const { user } = useAuth();
   const village = useVillage();
   if (user)

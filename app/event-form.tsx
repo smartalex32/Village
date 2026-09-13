@@ -1,12 +1,13 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { AppHeader, Button, Field, Screen } from "@/src/components/ui";
 import { useVillage } from "@/src/providers/VillageProvider";
 import { colors, radius, spacing } from "@/src/theme/tokens";
+import { useAppRouter } from "@/src/lib/useAppRouter";
 
 export default function EventFormScreen() {
-  const router = useRouter();
+  const router = useAppRouter();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const data = useVillage();
   const existing = data.events.find((event) => event.id === id);

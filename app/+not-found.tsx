@@ -1,8 +1,8 @@
-import { useRouter } from "expo-router";
 import { AppHeader, Button, EmptyState, Screen } from "@/src/components/ui";
+import { useAppRouter } from "@/src/lib/useAppRouter";
 
 export default function NotFoundScreen() {
-  const router = useRouter();
+  const router = useAppRouter();
   return (
     <Screen style={{ justifyContent: "center" }}>
       <AppHeader title="Page unavailable" />

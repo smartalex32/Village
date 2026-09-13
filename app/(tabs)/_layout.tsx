@@ -1,8 +1,9 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Tabs, useRouter } from "expo-router";
+import { Tabs } from "expo-router";
 import type { ComponentProps } from "react";
 import { ColorValue, Pressable, StyleSheet, View } from "react-native";
 import { colors, shadow } from "@/src/theme/tokens";
+import { useAppRouter } from "@/src/lib/useAppRouter";
 
 function icon(name: ComponentProps<typeof MaterialCommunityIcons>["name"]) {
   function TabBarIcon({ color }: { color: ColorValue }) {
@@ -12,7 +13,7 @@ function icon(name: ComponentProps<typeof MaterialCommunityIcons>["name"]) {
 }
 
 export default function TabLayout() {
-  const router = useRouter();
+  const router = useAppRouter();
   return (
     <Tabs
       screenOptions={{

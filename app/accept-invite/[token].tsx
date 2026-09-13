@@ -1,5 +1,5 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { AppHeader, Button, Card, Screen } from "@/src/components/ui";
@@ -7,10 +7,11 @@ import { useAuth } from "@/src/providers/AuthProvider";
 import { useVillage } from "@/src/providers/VillageProvider";
 import { supabase } from "@/src/lib/supabase";
 import { colors, spacing } from "@/src/theme/tokens";
+import { useAppRouter } from "@/src/lib/useAppRouter";
 
 export default function AcceptInvitationScreen() {
   const { token } = useLocalSearchParams<{ token: string }>();
-  const router = useRouter();
+  const router = useAppRouter();
   const { user, isDemo } = useAuth();
   const village = useVillage();
   const [status, setStatus] = useState<

@@ -1,12 +1,13 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text } from "react-native";
 import { AppHeader, Button, Card, Screen, uiStyles } from "@/src/components/ui";
 import { AuthForm } from "@/src/components/AuthForm";
 import { useAuth } from "@/src/providers/AuthProvider";
+import { useAppRouter } from "@/src/lib/useAppRouter";
 
 export default function SignUpScreen() {
-  const router = useRouter();
+  const router = useAppRouter();
   const { next } = useLocalSearchParams<{ next?: string }>();
   const { signUp, isDemo } = useAuth();
   const [sent, setSent] = useState(false);

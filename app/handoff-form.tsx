@@ -1,13 +1,13 @@
 import { randomUUID } from "expo-crypto";
-import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { AppHeader, Button, Field, Screen } from "@/src/components/ui";
 import { useVillage } from "@/src/providers/VillageProvider";
 import { colors, radius, spacing } from "@/src/theme/tokens";
+import { useAppRouter } from "@/src/lib/useAppRouter";
 
 export default function HandoffFormScreen() {
-  const router = useRouter();
+  const router = useAppRouter();
   const data = useVillage();
   const activeChildren = data.children.filter((child) => !child.archived);
   const [childId, setChildId] = useState(activeChildren[0]?.id ?? "");

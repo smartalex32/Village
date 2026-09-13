@@ -1,4 +1,3 @@
-import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import {
@@ -12,10 +11,11 @@ import { EventRow } from "@/src/components/EventRow";
 import { useVillage } from "@/src/providers/VillageProvider";
 import { formatHouseholdDate, householdDateKey } from "@/src/lib/dateTime";
 import { colors, radius, spacing } from "@/src/theme/tokens";
+import { useAppRouter } from "@/src/lib/useAppRouter";
 
 type Range = "Today" | "Tomorrow" | "This Week";
 export default function ScheduleScreen() {
-  const router = useRouter();
+  const router = useAppRouter();
   const data = useVillage();
   const currentMember = data.members.find(
     (member) => member.id === data.currentMemberId,

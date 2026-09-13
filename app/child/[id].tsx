@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 import {
   AppHeader,
@@ -13,10 +13,11 @@ import {
 import { EventRow } from "@/src/components/EventRow";
 import { useVillage } from "@/src/providers/VillageProvider";
 import { spacing } from "@/src/theme/tokens";
+import { useAppRouter } from "@/src/lib/useAppRouter";
 
 export default function ChildDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
+  const router = useAppRouter();
   const data = useVillage();
   const child = data.children.find((item) => item.id === id);
   const currentMember = data.members.find(

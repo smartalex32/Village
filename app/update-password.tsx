@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { useRouter } from "expo-router";
 import { StyleSheet, Text } from "react-native";
 import { AppHeader, Button, Card, Field, Screen } from "@/src/components/ui";
 import { useAuth } from "@/src/providers/AuthProvider";
 import { colors } from "@/src/theme/tokens";
+import { useAppRouter } from "@/src/lib/useAppRouter";
 
 export default function UpdatePasswordScreen() {
-  const router = useRouter();
+  const router = useAppRouter();
   const { updatePassword, user } = useAuth();
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");

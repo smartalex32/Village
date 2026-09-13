@@ -1,10 +1,11 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { AppHeader, Avatar, Button, Field, Screen } from "@/src/components/ui";
 import type { Capability } from "@/src/domain/types";
 import { useVillage } from "@/src/providers/VillageProvider";
 import { colors, radius, spacing } from "@/src/theme/tokens";
+import { useAppRouter } from "@/src/lib/useAppRouter";
 
 const types: { value: Capability; label: string }[] = [
   { value: "PICKUP", label: "Pickup" },
@@ -14,7 +15,7 @@ const types: { value: Capability; label: string }[] = [
   { value: "OTHER", label: "Other" },
 ];
 export default function HelpRequestScreen() {
-  const router = useRouter();
+  const router = useAppRouter();
   const { eventId } = useLocalSearchParams<{ eventId?: string }>();
   const data = useVillage();
   const linked = data.events.find((event) => event.id === eventId);

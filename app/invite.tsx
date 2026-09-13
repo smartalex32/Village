@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import {
   Pressable,
@@ -14,9 +14,10 @@ import { useVillage } from "@/src/providers/VillageProvider";
 import { colors, radius, spacing } from "@/src/theme/tokens";
 import { sendRemoteInvitation } from "@/src/data/supabaseRepository";
 import { isSupabaseConfigured } from "@/src/lib/supabase";
+import { useAppRouter } from "@/src/lib/useAppRouter";
 
 export default function InviteScreen() {
-  const router = useRouter();
+  const router = useAppRouter();
   const params = useLocalSearchParams<{
     email?: string;
     relationship?: string;

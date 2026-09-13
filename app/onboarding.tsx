@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useRouter } from "expo-router";
 import { Platform, StyleSheet, Text } from "react-native";
 import { AppHeader, Button, Card, Field, Screen } from "@/src/components/ui";
 import { useVillage } from "@/src/providers/VillageProvider";
@@ -11,9 +10,10 @@ import {
 import { isSupabaseConfigured } from "@/src/lib/supabase";
 import { useAuth } from "@/src/providers/AuthProvider";
 import { registerForPushNotifications } from "@/src/lib/notifications";
+import { useAppRouter } from "@/src/lib/useAppRouter";
 
 export default function OnboardingScreen() {
-  const router = useRouter();
+  const router = useAppRouter();
   const village = useVillage();
   const { user } = useAuth();
   const [household, setHousehold] = useState("");

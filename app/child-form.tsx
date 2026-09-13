@@ -1,5 +1,5 @@
 import * as ImagePicker from "expo-image-picker";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import {
@@ -13,9 +13,10 @@ import {
 import { useVillage } from "@/src/providers/VillageProvider";
 import { colors, spacing } from "@/src/theme/tokens";
 import { formatDateInput, isValidDateInput } from "@/src/lib/dateInput";
+import { useAppRouter } from "@/src/lib/useAppRouter";
 
 export default function ChildFormScreen() {
-  const router = useRouter();
+  const router = useAppRouter();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const village = useVillage();
   const existing = village.children.find((child) => child.id === id);

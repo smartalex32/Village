@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useRouter } from "expo-router";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import {
   AppHeader,
@@ -14,9 +13,10 @@ import { useAuth } from "@/src/providers/AuthProvider";
 import { registerForPushNotifications } from "@/src/lib/notifications";
 import { saveRemotePushToken } from "@/src/data/supabaseRepository";
 import { isSupabaseConfigured } from "@/src/lib/supabase";
+import { useAppRouter } from "@/src/lib/useAppRouter";
 
 export default function NotificationsScreen() {
-  const router = useRouter();
+  const router = useAppRouter();
   const data = useVillage();
   const { user } = useAuth();
   const [pushStatus, setPushStatus] = useState("");
