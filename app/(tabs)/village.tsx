@@ -8,6 +8,7 @@ import {
   Button,
   Card,
   EmptyState,
+  Field,
   Pill,
   Screen,
   uiStyles,
@@ -19,7 +20,11 @@ import { useAppRouter } from "@/src/lib/useAppRouter";
 export default function VillageScreen() {
   const router = useAppRouter();
   const data = useVillage();
-  const [section, setSection] = useState<"members" | "invitations">("members");
+  const [section, setSection] = useState<
+    "members" | "invitations" | "helpTypes"
+  >("members");
+  const [newHelpType, setNewHelpType] = useState("");
+  const [helpTypeError, setHelpTypeError] = useState("");
   const members = data.members.filter(
     (member) => member.id !== data.currentMemberId,
   );
@@ -29,6 +34,24 @@ export default function VillageScreen() {
   const canManage =
     currentMember?.role === "OWNER" ||
     currentMember?.role === "PARENT_GUARDIAN";
+  const isOwner = currentMember?.role === "OWNER";
+  const sections = isOwner
+    ? (["members", "invitations", "helpTypes"] as const)
+    : (["members", "invitations"] as const);
+
+  function addHelpType() {
+    const added = data.addHelpRequestType(newHelpType);
+    if (!added) {
+      setHelpTypeError(
+        newHelpType.trim()
+          ? "That help type already exists."
+          : "Enter a name for the help type.",
+      );
+      return;
+    }
+    setNewHelpType("");
+    setHelpTypeError("");
+  }
   return (
     <Screen scroll={false} style={styles.screen}>
       <AppHeader
@@ -48,7 +71,7 @@ export default function VillageScreen() {
         }
       />
       <View style={styles.tabs}>
-        {(["members", "invitations"] as const).map((item) => (
+        {sections.map((item) => (
           <Pressable
             key={item}
             accessibilityRole="button"
@@ -59,7 +82,11 @@ export default function VillageScreen() {
             <Text
               style={section === item ? styles.tabTextActive : styles.tabText}
             >
-              {item === "members" ? "Members" : "Invitations"}
+              {item === "members"
+                ? "Members"
+                : item === "invitations"
+                  ? "Invitations"
+                  : "Help types"}
             </Text>
           </Pressable>
         ))}
@@ -112,7 +139,7 @@ export default function VillageScreen() {
               </Pressable>
             ))}
           </Card>
-        ) : data.invitations.length ? (
+        ) : section === "invitations" && data.invitations.length ? (
           <View style={styles.invites}>
             {data.invitations.map((invitation) => (
               <Card key={invitation.id} style={styles.invite}>
@@ -154,15 +181,60 @@ export default function VillageScreen() {
               </Card>
             ))}
           </View>
-        ) : (
+        ) : section === "invitations" ? (
           <EmptyState
             icon="email-outline"
             title="No invitations yet"
             body="Invite a trusted caregiver when you’re ready."
           />
+        ) : (
+          <View style={styles.helpTypes}>
+            <Card style={styles.newHelpType}>
+              <Field
+                label="New help type"
+                value={newHelpType}
+                onChangeText={(value) => {
+                  setNewHelpType(value);
+                  setHelpTypeError("");
+                }}
+                placeholder="Medication pickup"
+                error={helpTypeError || undefined}
+              />
+              <Button label="Add Help Type" onPress={addHelpType} />
+            </Card>
+            <Card style={styles.typeList}>
+              {data.helpRequestTypes.map((type, index) => (
+                <View
+                  key={type.id}
+                  style={[
+                    styles.helpTypeRow,
+                    index < data.helpRequestTypes.length - 1 && styles.border,
+                  ]}
+                >
+                  <View style={styles.flex}>
+                    <Text style={uiStyles.strong}>{type.label}</Text>
+                  </View>
+                  {!type.isOther ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Delete ${type.label}`}
+                      onPress={() => data.removeHelpRequestType(type.id)}
+                      style={styles.deleteType}
+                    >
+                      <MaterialCommunityIcons
+                        name="trash-can-outline"
+                        size={21}
+                        color={colors.danger}
+                      />
+                    </Pressable>
+                  ) : null}
+                </View>
+              ))}
+            </Card>
+          </View>
         )}
       </ScrollView>
-      {canManage ? (
+      {canManage && section !== "helpTypes" ? (
         <Button
           label="Invite Someone"
           variant="secondary"
@@ -213,4 +285,19 @@ const styles = StyleSheet.create({
   invites: { gap: spacing.sm },
   invite: { gap: spacing.sm },
   inviteActions: { flexDirection: "row", gap: spacing.sm },
+  helpTypes: { gap: spacing.md },
+  newHelpType: { gap: spacing.md },
+  typeList: { paddingVertical: 0 },
+  helpTypeRow: {
+    minHeight: 56,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  deleteType: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });

@@ -72,9 +72,7 @@ export default function HelpSentScreen() {
       </View>
       <Card style={styles.summary}>
         <View style={uiStyles.between}>
-          <Text style={styles.type}>
-            {request.type.charAt(0) + request.type.slice(1).toLowerCase()}
-          </Text>
+          <Text style={styles.type}>{request.typeLabel}</Text>
           <Pill
             label={statusLabel}
             tone={
@@ -98,6 +96,9 @@ export default function HelpSentScreen() {
           📅 {format(new Date(request.startsAt), "MMM d 'at' h:mm a")}
         </Text>
         <Text style={uiStyles.body}>⌖ {request.location}</Text>
+        {request.context ? (
+          <Text style={uiStyles.body}>✎ {request.context}</Text>
+        ) : null}
         {request.notes ? (
           <Text style={uiStyles.muted}>“{request.notes}”</Text>
         ) : null}

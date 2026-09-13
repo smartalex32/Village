@@ -15,6 +15,7 @@ import {
   demoEvents,
   demoHandoffs,
   demoHelpRequests,
+  demoHelpRequestTypes,
   demoMembers,
   demoNotifications,
 } from "@/src/data/demo";
@@ -30,6 +31,7 @@ import {
   canAcknowledgeHandoff,
   coverageGaps,
 } from "@/src/domain/rules";
+import { sortHelpRequestTypes } from "@/src/domain/helpTypes";
 import type {
   Capability,
   CareEvent,
@@ -37,6 +39,7 @@ import type {
   ChildPermissionScope,
   Handoff,
   HelpRequest,
+  HelpRequestType,
   HouseholdInvitation,
   VillageMember,
   VillageNotification,
@@ -46,9 +49,10 @@ import { useAuth } from "@/src/providers/AuthProvider";
 
 type NewHelp = {
   childId: string;
-  type: Capability;
+  type: HelpRequestType;
   startsAt: string;
   location: string;
+  context?: string;
   notes?: string;
   recipientIds: string[];
   eventId?: string;
@@ -64,6 +68,7 @@ type VillageContextValue = {
   members: VillageMember[];
   events: CareEvent[];
   helpRequests: HelpRequest[];
+  helpRequestTypes: HelpRequestType[];
   handoffs: Handoff[];
   notifications: VillageNotification[];
   invitations: HouseholdInvitation[];
@@ -76,6 +81,8 @@ type VillageContextValue = {
   updateEvent(id: string, input: Partial<Omit<CareEvent, "id">>): void;
   cancelEvent(id: string): void;
   createHelpRequest(input: NewHelp): HelpRequest;
+  addHelpRequestType(label: string): HelpRequestType | undefined;
+  removeHelpRequestType(id: string): void;
   acceptHelpRequest(id: string, memberId?: string): boolean;
   declineHelpRequest(id: string, memberId?: string): void;
   closeHelpRequest(id: string, status: "COMPLETED" | "CANCELLED"): void;
@@ -128,6 +135,9 @@ export function VillageProvider({ children: content }: PropsWithChildren) {
   const [helpRequests, setHelpRequests] = useState(
     isSupabaseConfigured ? [] : demoHelpRequests,
   );
+  const [helpRequestTypes, setHelpRequestTypes] = useState<HelpRequestType[]>(
+    isSupabaseConfigured ? [] : demoHelpRequestTypes,
+  );
   const [handoffs, setHandoffs] = useState(
     isSupabaseConfigured ? [] : demoHandoffs,
   );
@@ -150,6 +160,7 @@ export function VillageProvider({ children: content }: PropsWithChildren) {
         setMembers(snapshot.members);
         setEvents(snapshot.events);
         setHelpRequests(snapshot.helpRequests);
+        setHelpRequestTypes(sortHelpRequestTypes(snapshot.helpRequestTypes));
         setHandoffs(snapshot.handoffs);
         setNotifications(snapshot.notifications);
         setInvitations(snapshot.invitations);
@@ -159,6 +170,7 @@ export function VillageProvider({ children: content }: PropsWithChildren) {
         setMembers([]);
         setEvents([]);
         setHelpRequests([]);
+        setHelpRequestTypes([]);
         setHandoffs([]);
         setNotifications([]);
         setInvitations([]);
@@ -364,8 +376,8 @@ export function VillageProvider({ children: content }: PropsWithChildren) {
       ({
         id: randomUUID(),
         childId: input.childId,
-        type: input.type,
-        title: input.type.toLowerCase().replace("_", " "),
+        type: input.type.label,
+        title: input.type.label,
         startsAt: input.startsAt,
         location: input.location,
         notes: input.notes,
@@ -373,11 +385,13 @@ export function VillageProvider({ children: content }: PropsWithChildren) {
         status: "SCHEDULED",
       } satisfies CareEvent);
     if (!linked) setEvents((items) => [...items, event]);
-    const { eventId: _eventId, ...requestInput } = input;
+    const { eventId: _eventId, type: _type, ...requestInput } = input;
     const request: HelpRequest = {
       ...requestInput,
       id: randomUUID(),
       eventId: event.id,
+      typeId: input.type.id,
+      typeLabel: input.type.label,
       status: "OPEN",
     };
     setHelpRequests((items) => [request, ...items]);
@@ -386,9 +400,10 @@ export function VillageProvider({ children: content }: PropsWithChildren) {
         requestId: request.id,
         eventId: event.id,
         childId: request.childId,
-        type: request.type,
+        typeId: request.typeId,
         startsAt: request.startsAt,
         location: request.location,
+        context: request.context,
         notes: request.notes,
         recipientIds: request.recipientIds,
       }).catch(() => setBackendState("error"));
@@ -398,6 +413,65 @@ export function VillageProvider({ children: content }: PropsWithChildren) {
       `/help-sent?id=${request.id}`,
     );
     return request;
+  }
+
+  function addHelpRequestType(label: string) {
+    const currentMember = members.find(
+      (member) => member.id === activeMemberId,
+    );
+    const normalizedLabel = label.trim();
+    if (
+      currentMember?.role !== "OWNER" ||
+      !normalizedLabel ||
+      helpRequestTypes.some(
+        (type) => type.label.toLowerCase() === normalizedLabel.toLowerCase(),
+      )
+    ) {
+      return undefined;
+    }
+    const type: HelpRequestType = {
+      id: randomUUID(),
+      label: normalizedLabel,
+      isOther: false,
+    };
+    setHelpRequestTypes((types) => sortHelpRequestTypes([...types, type]));
+    if (supabase && householdId)
+      void supabase
+        .from("help_request_types")
+        .insert({
+          id: type.id,
+          household_id: householdId,
+          label: type.label,
+          is_other: false,
+        })
+        .then(({ error }) => {
+          if (error) {
+            setBackendState("error");
+            void refreshRemote();
+          }
+        });
+    return type;
+  }
+
+  function removeHelpRequestType(id: string) {
+    const currentMember = members.find(
+      (member) => member.id === activeMemberId,
+    );
+    const type = helpRequestTypes.find((item) => item.id === id);
+    if (currentMember?.role !== "OWNER" || !type || type.isOther) return;
+    setHelpRequestTypes((types) => types.filter((item) => item.id !== id));
+    if (supabase && householdId)
+      void supabase
+        .from("help_request_types")
+        .update({ archived_at: new Date().toISOString() })
+        .eq("id", id)
+        .eq("household_id", householdId)
+        .then(({ error }) => {
+          if (error) {
+            setBackendState("error");
+            void refreshRemote();
+          }
+        });
   }
 
   function updateEvent(id: string, input: Partial<Omit<CareEvent, "id">>) {
@@ -861,6 +935,7 @@ export function VillageProvider({ children: content }: PropsWithChildren) {
     members,
     events,
     helpRequests,
+    helpRequestTypes,
     handoffs,
     notifications,
     invitations,
@@ -873,6 +948,8 @@ export function VillageProvider({ children: content }: PropsWithChildren) {
     updateEvent,
     cancelEvent,
     createHelpRequest,
+    addHelpRequestType,
+    removeHelpRequestType,
     acceptHelpRequest,
     declineHelpRequest,
     closeHelpRequest,

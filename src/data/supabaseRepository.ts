@@ -6,10 +6,12 @@ import type {
   Handoff,
   HouseholdInvitation,
   HelpRequest,
+  HelpRequestType,
   MemberRole,
   VillageMember,
   VillageNotification,
 } from "@/src/domain/types";
+import { sortHelpRequestTypes } from "@/src/domain/helpTypes";
 import { supabase } from "@/src/lib/supabase";
 
 export type RemoteVillageSnapshot = {
@@ -21,6 +23,7 @@ export type RemoteVillageSnapshot = {
   members: VillageMember[];
   events: CareEvent[];
   helpRequests: HelpRequest[];
+  helpRequestTypes: HelpRequestType[];
   handoffs: Handoff[];
   notifications: VillageNotification[];
   invitations: HouseholdInvitation[];
@@ -63,6 +66,7 @@ export async function loadRemoteVillage(): Promise<RemoteVillageSnapshot | null>
     membersResult,
     eventsResult,
     requestsResult,
+    requestTypesResult,
     handoffsResult,
     notificationsResult,
     invitationsResult,
@@ -89,6 +93,12 @@ export async function loadRemoteVillage(): Promise<RemoteVillageSnapshot | null>
       .eq("household_id", householdId)
       .order("created_at", { ascending: false }),
     client
+      .from("help_request_types")
+      .select("*")
+      .eq("household_id", householdId)
+      .is("archived_at", null)
+      .order("created_at"),
+    client
       .from("handoffs")
       .select("*,handoff_items(*)")
       .eq("household_id", householdId)
@@ -109,6 +119,7 @@ export async function loadRemoteVillage(): Promise<RemoteVillageSnapshot | null>
     membersResult,
     eventsResult,
     requestsResult,
+    requestTypesResult,
     handoffsResult,
     notificationsResult,
     invitationsResult,
@@ -180,9 +191,11 @@ export async function loadRemoteVillage(): Promise<RemoteVillageSnapshot | null>
       id: row.id,
       childId: row.child_id,
       eventId: row.event_id,
-      type: row.request_type,
+      typeId: row.request_type,
+      typeLabel: row.request_type_label,
       startsAt: row.starts_at,
       location: row.location,
+      context: row.context ?? undefined,
       notes: row.notes ?? undefined,
       recipientIds: row.help_request_recipients.map(
         (item: any) => item.member_id,
@@ -190,6 +203,14 @@ export async function loadRemoteVillage(): Promise<RemoteVillageSnapshot | null>
       assignedMemberId: row.assigned_member_id ?? undefined,
       status: row.status,
     })),
+    helpRequestTypes: sortHelpRequestTypes(
+      (requestTypesResult.data ?? []).map((row: any): HelpRequestType => ({
+        id: row.id,
+        label: row.label,
+        capability: row.capability ?? undefined,
+        isOther: row.is_other,
+      })),
+    ),
     handoffs: (handoffsResult.data ?? []).map((row: any) => ({
       id: row.id,
       childId: row.child_id,
@@ -250,9 +271,10 @@ export async function createRemoteHelp(input: {
   requestId: string;
   eventId: string;
   childId: string;
-  type: Capability;
+  typeId: string;
   startsAt: string;
   location: string;
+  context?: string;
   notes?: string;
   recipientIds: string[];
 }) {
@@ -260,9 +282,10 @@ export async function createRemoteHelp(input: {
     p_request_id: input.requestId,
     p_event_id: input.eventId,
     p_child_id: input.childId,
-    p_request_type: input.type,
+    p_request_type: input.typeId,
     p_starts_at: input.startsAt,
     p_location: input.location,
+    p_context: input.context ?? null,
     p_notes: input.notes ?? null,
     p_recipient_member_ids: input.recipientIds,
   });

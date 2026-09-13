@@ -2,27 +2,18 @@ import { useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { AppHeader, Avatar, Button, Field, Screen } from "@/src/components/ui";
-import type { Capability } from "@/src/domain/types";
+import { isEligibleForHelpType } from "@/src/domain/helpTypes";
 import { useVillage } from "@/src/providers/VillageProvider";
 import { colors, radius, spacing } from "@/src/theme/tokens";
 import { useAppRouter } from "@/src/lib/useAppRouter";
 
-const types: { value: Capability; label: string }[] = [
-  { value: "PICKUP", label: "Pickup" },
-  { value: "DROPOFF", label: "Dropoff" },
-  { value: "BABYSITTING", label: "Babysitting" },
-  { value: "TRANSPORTATION", label: "Transportation" },
-  { value: "OTHER", label: "Other" },
-];
 export default function HelpRequestScreen() {
   const router = useAppRouter();
   const { eventId } = useLocalSearchParams<{ eventId?: string }>();
   const data = useVillage();
   const linked = data.events.find((event) => event.id === eventId);
   const activeChildren = data.children.filter((child) => !child.archived);
-  const [type, setType] = useState<Capability>(
-    (linked?.type as Capability) ?? "PICKUP",
-  );
+  const [typeId, setTypeId] = useState(linked?.type ?? "PICKUP");
   const [childId, setChildId] = useState(
     linked?.childId ?? activeChildren[0]?.id ?? "",
   );
@@ -30,6 +21,7 @@ export default function HelpRequestScreen() {
     linked?.location ?? "Westside Elementary",
   );
   const [notes, setNotes] = useState("");
+  const [context, setContext] = useState("");
   const [recipientIds, setRecipientIds] = useState<string[]>([]);
   const startsAt = useMemo(() => {
     if (linked) return linked.startsAt;
@@ -38,23 +30,31 @@ export default function HelpRequestScreen() {
     if (date < new Date()) date.setDate(date.getDate() + 1);
     return date.toISOString();
   }, [linked]);
-  const recipients = data.members.filter(
-    (member) =>
-      member.id !== data.currentMemberId &&
-      member.childIds.includes(childId) &&
-      member.capabilities.includes(type),
-  );
+  const selectedType =
+    data.helpRequestTypes.find((item) => item.id === typeId) ??
+    data.helpRequestTypes.find((item) => item.label === linked?.type) ??
+    data.helpRequestTypes.find((item) => item.capability === linked?.type) ??
+    data.helpRequestTypes[0];
+  const recipients = selectedType
+    ? data.members.filter(
+        (member) =>
+          member.id !== data.currentMemberId &&
+          isEligibleForHelpType(member, childId, selectedType),
+      )
+    : [];
   function toggle(id: string) {
     setRecipientIds((items) =>
       items.includes(id) ? items.filter((item) => item !== id) : [...items, id],
     );
   }
   function submit() {
+    if (!selectedType) return;
     const request = data.createHelpRequest({
       childId,
-      type,
+      type: selectedType,
       startsAt,
       location,
+      context,
       notes,
       recipientIds,
       eventId,
@@ -70,21 +70,24 @@ export default function HelpRequestScreen() {
       />
       <Text style={styles.label}>What type of help is needed?</Text>
       <View style={styles.helpTypes}>
-        {types.map((item) => (
+        {data.helpRequestTypes.map((item) => (
           <Pressable
-            key={item.value}
+            key={item.id}
             accessibilityRole="button"
-            accessibilityState={{ selected: type === item.value }}
+            accessibilityState={{ selected: selectedType?.id === item.id }}
             onPress={() => {
-              setType(item.value);
+              setTypeId(item.id);
               setRecipientIds([]);
             }}
-            style={[styles.chip, type === item.value && styles.chipActive]}
+            style={[
+              styles.chip,
+              selectedType?.id === item.id && styles.chipActive,
+            ]}
           >
             <Text
               style={[
                 styles.chipText,
-                type === item.value && styles.chipTextActive,
+                selectedType?.id === item.id && styles.chipTextActive,
               ]}
             >
               {item.label}
@@ -165,8 +168,18 @@ export default function HelpRequestScreen() {
       </ScrollView>
       {!recipients.length ? (
         <Text style={styles.empty}>
-          No eligible caregivers have this capability and child access.
+          No eligible caregivers have access to this child.
         </Text>
+      ) : null}
+      {selectedType?.isOther ? (
+        <Field
+          label="What kind of help do you need?"
+          value={context}
+          onChangeText={setContext}
+          multiline
+          placeholder="Give your village the details."
+          style={styles.notes}
+        />
       ) : null}
       <Field
         label="Add a note (optional)"
@@ -179,7 +192,13 @@ export default function HelpRequestScreen() {
       <Button
         label="Ask My Village"
         onPress={submit}
-        disabled={!childId || !location.trim() || !recipientIds.length}
+        disabled={
+          !selectedType ||
+          !childId ||
+          !location.trim() ||
+          !recipientIds.length ||
+          (selectedType.isOther && !context.trim())
+        }
       />
     </Screen>
   );

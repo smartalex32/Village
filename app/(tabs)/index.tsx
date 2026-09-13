@@ -360,7 +360,7 @@ export default function TodayScreen() {
                           (child) => child.id === item.request.childId,
                         )?.firstName
                       }{" "}
-                      · {item.request.type.toLowerCase()}
+                      · {item.request.typeLabel.toLowerCase()}
                     </Text>
                     <Text style={uiStyles.muted} numberOfLines={1}>
                       {item.request.status === "ASSIGNED"
