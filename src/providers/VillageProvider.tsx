@@ -57,6 +57,10 @@ type NewHelp = {
   recipientIds: string[];
   eventId?: string;
 };
+
+type ChildUpdate = Omit<Partial<Omit<Child, "id">>, "birthDate"> & {
+  birthDate?: string | null;
+};
 type VillageContextValue = {
   householdName: string;
   householdTimezone: string;
@@ -74,7 +78,7 @@ type VillageContextValue = {
   invitations: HouseholdInvitation[];
   gaps: CareEvent[];
   addChild(input: Omit<Child, "id" | "archived">): Child;
-  updateChild(id: string, input: Partial<Omit<Child, "id">>): void;
+  updateChild(id: string, input: ChildUpdate): void;
   uploadChildAvatar(id: string, uri: string): Promise<void>;
   archiveChild(id: string): void;
   addEvent(input: Omit<CareEvent, "id" | "status">): CareEvent;
@@ -273,9 +277,24 @@ export function VillageProvider({ children: content }: PropsWithChildren) {
         });
   }
 
-  function updateChild(id: string, input: Partial<Omit<Child, "id">>) {
+  function updateChild(id: string, input: ChildUpdate) {
+    const hasBirthDate = Object.prototype.hasOwnProperty.call(
+      input,
+      "birthDate",
+    );
+    const { birthDate: inputBirthDate, ...childInput } = input;
     setChildren((items) =>
-      items.map((child) => (child.id === id ? { ...child, ...input } : child)),
+      items.map((child) =>
+        child.id === id
+          ? {
+              ...child,
+              ...childInput,
+              ...(hasBirthDate
+                ? { birthDate: inputBirthDate ?? undefined }
+                : {}),
+            }
+          : child,
+      ),
     );
     if (supabase)
       void (async () => {

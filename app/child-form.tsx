@@ -54,15 +54,21 @@ export default function ChildFormScreen() {
 
     setBirthDateError("");
     setSaving(true);
-    const input = {
+    const profileInput = {
       firstName: firstName.trim(),
-      birthDate: formattedBirthDate || undefined,
-      notes: notes || undefined,
+      notes,
     };
     try {
       const child = existing
-        ? (village.updateChild(existing.id, input), existing)
-        : village.addChild(input);
+        ? (village.updateChild(existing.id, {
+            ...profileInput,
+            birthDate: formattedBirthDate || null,
+          }),
+          existing)
+        : village.addChild({
+            ...profileInput,
+            birthDate: formattedBirthDate || undefined,
+          });
       if (avatarUri && avatarUri !== existing?.avatarUrl)
         await village.uploadChildAvatar(child.id, avatarUri);
       router.back();

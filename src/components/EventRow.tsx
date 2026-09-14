@@ -22,12 +22,14 @@ export function EventRow({
   caregiver,
   onPress,
   timeZone = "UTC",
+  compact = false,
 }: {
   event: CareEvent;
   child?: Child;
   caregiver?: VillageMember;
   onPress?: () => void;
   timeZone?: string;
+  compact?: boolean;
 }) {
   const missing = event.requiresCaregiver && !caregiver;
   return (
@@ -40,15 +42,21 @@ export function EventRow({
       }
       disabled={!onPress}
       onPress={onPress}
-      style={styles.row}
+      style={[styles.row, compact && styles.rowCompact]}
     >
-      <Text style={styles.time}>
+      <Text style={[styles.time, compact && styles.timeCompact]}>
         {formatHouseholdDate(event.startsAt, timeZone, {
           hour: "numeric",
           minute: "2-digit",
         })}
       </Text>
-      <View style={[styles.icon, missing && styles.iconAlert]}>
+      <View
+        style={[
+          styles.icon,
+          compact && styles.iconCompact,
+          missing && styles.iconAlert,
+        ]}
+      >
         <MaterialCommunityIcons
           name={eventIcons[event.type] ?? "calendar"}
           size={19}
@@ -79,7 +87,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.line,
   },
+  rowCompact: { minHeight: 56, paddingVertical: spacing.xs },
   time: { width: 72, color: "#40514E", fontWeight: "600", fontSize: 13 },
+  timeCompact: { width: 62 },
   icon: {
     width: 38,
     height: 38,
@@ -88,6 +98,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: colors.surfaceMuted,
     marginRight: spacing.sm,
+  },
+  iconCompact: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    marginRight: spacing.xs,
   },
   iconAlert: { backgroundColor: colors.dangerSoft },
   details: { flex: 1 },

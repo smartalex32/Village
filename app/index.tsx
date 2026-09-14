@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Redirect } from "expo-router";
-import { StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 import { Button, Screen } from "@/src/components/ui";
 import { colors, spacing } from "@/src/theme/tokens";
 import { useAuth } from "@/src/providers/AuthProvider";
@@ -25,10 +25,10 @@ export default function WelcomeScreen() {
     <Screen scroll={false} style={styles.screen}>
       <View style={styles.hero}>
         <View style={styles.mark}>
-          <MaterialCommunityIcons
-            name="home-heart"
-            size={80}
-            color={colors.forest}
+          <Image
+            source={require("@/assets/images/village-mark.png")}
+            style={styles.markImage}
+            accessibilityLabel="Village logo"
           />
         </View>
         <Text style={styles.logo}>Village</Text>
@@ -69,6 +69,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 34,
   },
   mark: { marginBottom: 8 },
+  markImage: { width: 112, height: 112 },
   logo: {
     color: colors.forestDark,
     fontWeight: "900",
