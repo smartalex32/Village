@@ -4,20 +4,12 @@ on:
   push:
     branches: [main]
 jobs:
-  app:
-    runs-on: ubuntu-latest
+  ios:
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm run format:check
-      - run: npm run typecheck
-      - run: npm run lint
-      - run: npm run test:ci
-      - run: npx expo export --platform web
+      - name: Build and test the native app
+        run: xcodebuild test -project Village.xcodeproj -scheme Village -destination 'platform=iOS Simulator,name=iPhone 16 Pro' CODE_SIGNING_ALLOWED=NO
   database:
     runs-on: ubuntu-latest
     steps:

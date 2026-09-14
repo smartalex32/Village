@@ -2,8 +2,9 @@
 
 ## Architecture
 
-- Expo Router application for iOS, Android, and development web preview.
-- `app/` contains routes only; shared UI, providers, domain rules, and data adapters live in `src/`.
+- Native iOS application built with Swift 5, SwiftUI, and an Xcode project. The deployment target is iOS 17.
+- `Village/App` owns lifecycle and app state, `Village/Core` contains domain and Supabase infrastructure, and `Village/Features` contains SwiftUI screens.
+- The client talks to Supabase Auth, PostgREST, and database RPCs directly through `URLSession`; no JavaScript runtime or third-party iOS SDK is required.
 - Supabase migrations, RLS helpers, transactional functions, Edge Functions, and pgTAP tests live in `supabase/`.
 - When Supabase environment variables are absent, the app uses the seeded in-memory household for UI review. When present, `VillageProvider` hydrates from Supabase and subscribes to authorized realtime changes.
 
@@ -20,12 +21,9 @@
 
 ## Validation
 
-- `npm run typecheck`
-- `npm run lint`
-- `npm run test:ci`
-- `npm run format:check`
-- `npx expo export --platform web`
-- With Docker: `npm run supabase:start`, `npm run supabase:lint`, and `npm run supabase:test`
+- On macOS: `xcodebuild test -project Village.xcodeproj -scheme Village -destination 'platform=iOS Simulator,name=iPhone 16 Pro' CODE_SIGNING_ALLOWED=NO`
+- `npm run format:check` validates backend TypeScript, JSON, and Markdown only.
+- With Docker: `npm run supabase:start`, `npm run supabase:lint`, and `npm run supabase:test`.
 - With Deno: `deno lint supabase/functions` and `deno test supabase/functions`
 
 Do not log child notes, invitation tokens, authentication tokens, or precise family schedule details.

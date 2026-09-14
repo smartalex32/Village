@@ -1,43 +1,38 @@
 # Village
 
-Village is a private mobile app for coordinating childcare responsibilities, help requests, and caregiver handoffs. It is built with Expo/React Native and Supabase.
+Village is a private, native iOS app for coordinating childcare responsibilities, help requests, schedules, and caregiver handoffs. The client is written in SwiftUI and uses the existing Supabase backend.
 
-New to Supabase or mobile-app distribution? Follow the complete [first-time backend and release setup guide](docs/SETUP_GUIDE.md).
+## Requirements
 
-Using the app? See the illustrated [Village user guide](docs/user-guide/USER_GUIDE.md).
+- macOS with Xcode 16 or newer
+- iOS 17 or newer
+- Node.js 22 and Docker only when running the local Supabase stack
 
-## Run locally
+## Run the iOS app
 
-1. Install dependencies with `npm install`.
-2. Copy `.env.example` to `.env`.
-3. Leave the Supabase values blank to use the seeded local demo, or run `npm run supabase:start` and copy the local API URL and publishable key into `.env`.
-4. Run `npm start`, `npm run android`, `npm run ios`, or `npm run web`.
+1. Open `Village.xcodeproj` in Xcode.
+2. Copy `Config/Secrets.xcconfig.example` to `Config/Secrets.xcconfig`.
+3. Add the Supabase project URL and publishable key. Leave both blank to use the on-device demo.
+4. Select an iPhone simulator and run the `Village` scheme.
 
-In demo mode, any syntactically valid email and password of at least eight characters will sign in. No invitation, email, or push request leaves the device.
-
-## Production configuration
-
-- Create separate staging and production Supabase projects and apply migrations from `supabase/migrations`.
-- Configure Supabase Auth SMTP with Resend and set the mobile redirect URLs from `supabase/config.toml`.
-- Set Edge Function secrets: `RESEND_API_KEY`, `INVITATION_FROM_EMAIL`, `LINK_BASE_URL`, and `NOTIFICATION_WEBHOOK_SECRET`.
-- Deploy `send-invitation` and `deliver-notifications`. Invoke notification delivery from a protected database webhook or scheduled job.
-- Replace `com.village.mobile`, `links.village.app`, and the EAS project ID with owned production values before generating beta builds.
-- Host Apple App Site Association and Android Asset Links files on the chosen link domain.
+The native client has no CocoaPods, Swift Package, React Native, Expo, or JavaScript runtime dependency. It uses SwiftUI, `URLSession`, and Keychain Services.
 
 ## Validation
 
 ```sh
-npm run format:check
-npm run typecheck
-npm run lint
-npm run test:ci
-npx expo export --platform web
+xcodebuild test \
+  -project Village.xcodeproj \
+  -scheme Village \
+  -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+  CODE_SIGNING_ALLOWED=NO
 ```
 
-With the local Supabase stack running, also run `npm run supabase:lint` and `npm run supabase:test`. Maestro flows live in `.maestro/`; the Android EAS workflow runs them against an installable test build.
+Backend validation remains available with `npm run supabase:lint`, `npm run supabase:test`, and Deno lint/test for the Edge Functions.
 
-The local demo covers onboarding, household dashboards, invitations and permission presets, family profiles, scheduling, help requests, and one-step handoff acknowledgment. Production mode adds persisted sessions, private avatar uploads, realtime reconciliation, Resend invitations, and Expo push routing through Supabase.
+## Configuration and release
+
+See the [setup guide](docs/SETUP_GUIDE.md) for Supabase, signing, associated domains, TestFlight, and production configuration.
 
 ## Privacy model
 
-All household tables use row-level security. Manager actions and child-level permissions are checked in Postgres, while race-sensitive operations use explicit transactional functions. Avatar storage is private. Sensitive notes and tokens are intentionally excluded from notification delivery logs.
+All household tables use row-level security. Manager actions and child-level permissions are checked in Postgres, while race-sensitive operations use transactional functions. Sessions are stored in the iOS Keychain. Care notes, invitation tokens, auth tokens, and precise schedule details must never be logged.
