@@ -133,13 +133,22 @@ export interface CareEvent {
   status: CareEventStatus;
 }
 
+export interface HelpRequestType {
+  id: string;
+  label: string;
+  capability?: Capability;
+  isOther: boolean;
+}
+
 export interface HelpRequest {
   id: string;
   childId: string;
   eventId: string;
-  type: Capability;
+  typeId: string;
+  typeLabel: string;
   startsAt: string;
   location: string;
+  context?: string;
   notes?: string;
   recipientIds: string[];
   assignedMemberId?: string;
