@@ -64,17 +64,17 @@ Tap the account icon beside the notification bell on Today to review your profil
 
 ## 3. Use the Today dashboard
 
-Today is the household’s compact coordination overview. It always shows each child’s most recently acknowledged caregiver, at least the next available event on today’s schedule, and at least one coverage gap or help request when attention is needed. Otherwise, it confirms that everything is covered. Larger screens show additional schedule and attention items when space permits. Tap **See all** beside Today’s schedule to switch to the full Schedule tab.
+Today is the household’s compact coordination overview. It shows each child’s most recent acknowledgment with its date and time, the next available event on today’s schedule, and unresolved care responsibilities. Larger screens show additional items when space permits. Tap **See all** beside Today’s schedule to switch to Schedule, or beside **Needs attention** to expand all unresolved items.
 
 ![Today dashboard](images/03-today.png)
 
-### Understand “Currently with”
+### Understand “Last acknowledged with”
 
-**Currently with** is based on the latest handoff acknowledgment. It is a coordination record, not GPS, physical tracking, or proof of a child’s location. Confirm directly with the caregiver whenever real-world circumstances are unclear.
+**Last acknowledged with** names the caregiver in the latest completed handoff and shows when they acknowledged it. It is a historical coordination record, not proof of the child’s current location. Confirm directly with the caregiver whenever real-world circumstances are unclear.
 
 ### Handle a coverage gap
 
-An item under **Needs attention** has no assigned caregiver. Tap **Find Help** to start a request with the child, time, and event details already filled in. You can also edit the event from Schedule and assign a caregiver directly.
+**Needs attention** includes unassigned events, open help requests, and overdue handoffs. An unassigned event stays visible after its start time until it is assigned, completed, or cancelled. Urgent items appear first. Tap **Find Help** to start a request with the event details filled in, or open an existing request to ask more caregivers. You can also edit the event from Schedule to assign a caregiver, mark care complete, or cancel it.
 
 ## 4. Manage the schedule
 
@@ -86,10 +86,12 @@ Open **Schedule** to switch between **Today**, **Tomorrow**, and **This Week**. 
 
 1. Tap **+** in the Schedule header, or choose **Add Event** from the center quick-actions button.
 2. Select the child and event type.
-3. Add a title, start and end time, location, caregiver, and optional notes.
+3. Add a title, date and start time, location, and caregiver. Add an end time when the responsibility lasts for a period.
 4. Save the event.
 
-Tap an existing event to edit it, change the caregiver, or cancel it. Cancellation keeps an accurate record without presenting the event as upcoming care.
+Dates and times use the household timezone shown on the form. Invalid dates and times are rejected. Times skipped by a daylight-saving change cannot be saved; when a clock change repeats a time, the form lets you choose the occurrence.
+
+Tap an existing event to edit it, change the caregiver, mark it complete, or cancel it. Editing its time or location updates any active linked help request. Completing or cancelling the event also closes that request. The child cannot be changed while a linked request is active; cancel the request first. Completed request history is preserved.
 
 ## 5. Manage children
 
@@ -149,7 +151,7 @@ Use a structured help request when an event needs a caregiver.
 
 1. Tap **Find Help** on a coverage gap, or choose **Ask for Help** from the center **+** quick-actions button.
 2. Choose the help type and child. Select **Other** when pickup, dropoff, babysitting, or transportation does not describe the request.
-3. Confirm the date, time, and location.
+3. Choose the date, time, and location. For a request linked to an existing event, use **Edit Event Details** to change its schedule.
 4. Select one or more eligible caregivers.
 5. Add an optional care note.
 6. Tap **Ask My Village** and confirm the summary.
@@ -160,9 +162,13 @@ Tap the back arrow beside **Ask for Help** to return without sending a request.
 
 The request creates or links one schedule event. The first eligible caregiver to accept gets the assignment; Village updates the linked event and tells the parent and other recipients. This prevents two people from accepting the same responsibility.
 
-Recipients can open the notification to review the child, time, location, and responsibility-specific notes, then **Accept** or **Decline**. A parent can cancel an open request, reassign care if plans change, and mark finished requests complete.
+Recipients can open the notification to review the child, time, location, and responsibility-specific notes, then **Accept** or **Decline**. A parent can cancel an open or covered request and mark covered care complete. To change the child or accepted caregiver, cancel the request and schedule the revised responsibility. Removing an assigned caregiver reopens their future requests for coverage.
 
 If someone else accepts while your screen is stale, Village shows a conflict message and refreshes the latest assignment.
+
+The request shows which caregivers are waiting to respond, accepted, or declined. Declining remains visible in the response history. When everyone declines, **Nobody available** makes clear that care still needs coverage. A parent or authorized request creator can select additional eligible caregivers and ask them on the same request. Village keeps one event and one assignment, and repeated submissions do not send duplicate invitations to those caregivers.
+
+Older versions automatically marked unanswered recipients as declined when someone accepted. Those historical records cannot distinguish an actual decline from an automatic closure; new responses preserve that distinction.
 
 ## 8. Create and complete a handoff
 
@@ -172,7 +178,7 @@ A handoff records the transfer of care responsibility from one household member 
 
 1. Tap the center **+** button and choose **Create Handoff**.
 2. Choose the child, sender, and receiver.
-3. Confirm the time and location.
+3. Choose the date and time in the household timezone, and confirm the location.
 4. Add checklist items and a short note.
 5. Optionally connect the handoff to an upcoming event.
 6. Tap **Create Handoff**.
@@ -186,6 +192,8 @@ The sender checks the prepared items and taps **Mark as Ready**. The authorized 
 ![Handoff status screen](images/13-handoff-status.png)
 
 Acknowledgment records who received the child and when, transfers the app’s responsibility state, and completes the handoff in one step. Completed handoffs cannot be edited or reopened; create a new handoff to correct the coordination record.
+
+An active handoff becomes **Overdue** after its scheduled time passes without acknowledgment. It remains in **Needs attention** until the handoff is completed or cancelled. The sender or a household manager can use **Cancel Handoff** if the planned transfer will not happen; cancellation does not transfer responsibility or change the last acknowledgment. Confirm directly with the caregiver; an overdue record does not establish where the child is.
 
 ## 9. Use notifications
 

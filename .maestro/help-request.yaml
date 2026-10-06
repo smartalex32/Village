@@ -8,4 +8,4 @@ appId: com.village.mobile
 - inputText: "Meeting is running late."
 - tapOn: "Ask My Village"
 - assertVisible: "Help Request Sent"
-- assertVisible: "Notified"
+- assertVisible: "Waiting for response"

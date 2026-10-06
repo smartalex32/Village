@@ -7,6 +7,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import {
@@ -22,6 +23,7 @@ import {
 import {
   acknowledgeRemoteHandoff,
   acceptRemoteHelp,
+  addRemoteHelpRecipients,
   createRemoteHelp,
   loadRemoteVillage,
   removeRemoteMember,
@@ -31,7 +33,10 @@ import {
   canAcknowledgeHandoff,
   coverageGaps,
 } from "@/src/domain/rules";
-import { sortHelpRequestTypes } from "@/src/domain/helpTypes";
+import {
+  isEligibleForHelpType,
+  sortHelpRequestTypes,
+} from "@/src/domain/helpTypes";
 import type {
   Capability,
   CareEvent,
@@ -89,10 +94,15 @@ type VillageContextValue = {
   removeHelpRequestType(id: string): void;
   acceptHelpRequest(id: string, memberId?: string): boolean;
   declineHelpRequest(id: string, memberId?: string): void;
+  addHelpRequestRecipients(
+    id: string,
+    recipientIds: string[],
+  ): Promise<boolean>;
   closeHelpRequest(id: string, status: "COMPLETED" | "CANCELLED"): void;
   createHandoff(input: Omit<Handoff, "id" | "status" | "acceptedAt">): Handoff;
   toggleHandoffItem(handoffId: string, itemId: string): void;
   markHandoffReady(id: string): void;
+  cancelHandoff(id: string): void;
   acknowledgeHandoff(id: string, memberId?: string): boolean;
   inviteMember(
     name: string,
@@ -115,6 +125,7 @@ type VillageContextValue = {
 const VillageContext = createContext<VillageContextValue | null>(null);
 
 export function VillageProvider({ children: content }: PropsWithChildren) {
+  const recipientOperations = useRef(new Map<string, string>());
   const { user } = useAuth();
   const [householdId, setHouseholdId] = useState<string>();
   const [activeMemberId, setActiveMemberId] = useState(
@@ -390,6 +401,14 @@ export function VillageProvider({ children: content }: PropsWithChildren) {
     const linked = input.eventId
       ? events.find((event) => event.id === input.eventId)
       : undefined;
+    if (input.eventId) {
+      const existing = helpRequests.find(
+        (request) => request.eventId === input.eventId,
+      );
+      if (existing) return existing;
+      if (!linked || linked.status !== "SCHEDULED" || linked.caregiverId)
+        throw new Error("This event is unavailable for help.");
+    }
     const event: CareEvent =
       linked ??
       ({
@@ -411,6 +430,14 @@ export function VillageProvider({ children: content }: PropsWithChildren) {
       eventId: event.id,
       typeId: input.type.id,
       typeLabel: input.type.label,
+      requiredCapability: input.type.capability,
+      childId: event.childId,
+      startsAt: event.startsAt,
+      location: event.location ?? "",
+      createdByMemberId: activeMemberId,
+      recipientResponses: Object.fromEntries(
+        input.recipientIds.map((id) => [id, "PENDING" as const]),
+      ),
       status: "OPEN",
     };
     setHelpRequests((items) => [request, ...items]);
@@ -497,42 +524,58 @@ export function VillageProvider({ children: content }: PropsWithChildren) {
     setEvents((items) =>
       items.map((event) => (event.id === id ? { ...event, ...input } : event)),
     );
+    setHelpRequests((items) =>
+      items.map((request) => {
+        if (
+          request.eventId !== id ||
+          (request.status !== "OPEN" && request.status !== "ASSIGNED")
+        )
+          return request;
+        return {
+          ...request,
+          startsAt: input.startsAt ?? request.startsAt,
+          location: input.location ?? request.location,
+          status:
+            input.status === "COMPLETED" || input.status === "CANCELLED"
+              ? input.status
+              : request.status,
+        };
+      }),
+    );
     if (supabase)
       void supabase
-        .from("care_events")
-        .update({
-          child_id: input.childId,
-          event_type: input.type,
-          title: input.title,
-          starts_at: input.startsAt,
-          ends_at: input.endsAt,
-          location: input.location,
-          assigned_member_id: input.caregiverId,
-          notes: input.notes,
-          requires_caregiver: input.requiresCaregiver,
-          status: input.status,
+        .rpc("update_care_event", {
+          p_event_id: id,
+          p_changes: {
+            child_id: input.childId,
+            event_type: input.type,
+            title: input.title,
+            starts_at: input.startsAt,
+            ends_at: Object.prototype.hasOwnProperty.call(input, "endsAt")
+              ? (input.endsAt ?? null)
+              : undefined,
+            location: input.location,
+            assigned_member_id: Object.prototype.hasOwnProperty.call(
+              input,
+              "caregiverId",
+            )
+              ? (input.caregiverId ?? null)
+              : undefined,
+            notes: input.notes,
+            requires_caregiver: input.requiresCaregiver,
+            status: input.status,
+          },
         })
-        .eq("id", id)
         .then(({ error }) => {
-          if (error) setBackendState("error");
+          if (error) {
+            setBackendState("error");
+            void refreshRemote();
+          }
         });
   }
 
   function cancelEvent(id: string) {
     updateEvent(id, { status: "CANCELLED" });
-    setHelpRequests((items) =>
-      items.map((request) =>
-        request.eventId === id && request.status === "OPEN"
-          ? { ...request, status: "CANCELLED" }
-          : request,
-      ),
-    );
-    if (supabase)
-      void supabase
-        .from("help_requests")
-        .update({ status: "CANCELLED", cancelled_at: new Date().toISOString() })
-        .eq("event_id", id)
-        .eq("status", "OPEN");
   }
 
   function acceptHelpRequest(id: string, memberId = activeMemberId) {
@@ -541,7 +584,15 @@ export function VillageProvider({ children: content }: PropsWithChildren) {
     setHelpRequests((items) =>
       items.map((item) =>
         item.id === id
-          ? { ...item, status: "ASSIGNED", assignedMemberId: memberId }
+          ? {
+              ...item,
+              status: "ASSIGNED",
+              assignedMemberId: memberId,
+              recipientResponses: {
+                ...item.recipientResponses,
+                [memberId]: "ACCEPTED",
+              },
+            }
           : item,
       ),
     );
@@ -591,14 +642,17 @@ export function VillageProvider({ children: content }: PropsWithChildren) {
   }
 
   function declineHelpRequest(id: string, memberId = activeMemberId) {
+    const request = helpRequests.find((item) => item.id === id);
+    if (!request || !canAcceptHelp(request, memberId)) return;
     setHelpRequests((items) =>
       items.map((request) =>
         request.id === id
           ? {
               ...request,
-              recipientIds: request.recipientIds.filter(
-                (recipientId) => recipientId !== memberId,
-              ),
+              recipientResponses: {
+                ...request.recipientResponses,
+                [memberId]: "DECLINED",
+              },
             }
           : request,
       ),
@@ -615,6 +669,67 @@ export function VillageProvider({ children: content }: PropsWithChildren) {
             void refreshRemote();
           }
         });
+  }
+
+  async function addHelpRequestRecipients(id: string, recipientIds: string[]) {
+    const request = helpRequests.find((item) => item.id === id);
+    const actor = members.find((member) => member.id === activeMemberId);
+    const type = request
+      ? (helpRequestTypes.find((item) => item.id === request.typeId) ?? {
+          id: request.typeId,
+          label: request.typeLabel,
+          capability: request.requiredCapability,
+          isOther: false,
+        })
+      : undefined;
+    const ids = [...new Set(recipientIds)].sort();
+    if (
+      !request ||
+      !actor ||
+      !type ||
+      request.status !== "OPEN" ||
+      ids.length === 0 ||
+      (actor.role !== "OWNER" &&
+        actor.role !== "PARENT_GUARDIAN" &&
+        request.createdByMemberId !== actor.id) ||
+      ids.some((memberId) => {
+        const member = members.find((item) => item.id === memberId);
+        return !member || !isEligibleForHelpType(member, request.childId, type);
+      })
+    )
+      return false;
+    const key = `${activeMemberId}:${id}:${ids.join(",")}`;
+    const operationId = recipientOperations.current.get(key) ?? randomUUID();
+    recipientOperations.current.set(key, operationId);
+    try {
+      if (supabase) await addRemoteHelpRecipients(id, ids, operationId);
+      const added = ids.filter(
+        (memberId) => !request.recipientIds.includes(memberId),
+      );
+      setHelpRequests((items) =>
+        items.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                recipientIds: [...new Set([...item.recipientIds, ...added])],
+                recipientResponses: {
+                  ...item.recipientResponses,
+                  ...Object.fromEntries(
+                    added.map((memberId) => [memberId, "PENDING" as const]),
+                  ),
+                },
+              }
+            : item,
+        ),
+      );
+      recipientOperations.current.delete(key);
+      if (supabase) await refreshRemote();
+      return true;
+    } catch {
+      setBackendState("error");
+      void refreshRemote();
+      return false;
+    }
   }
 
   function createHandoff(input: Omit<Handoff, "id" | "status" | "acceptedAt">) {
@@ -689,6 +804,39 @@ export function VillageProvider({ children: content }: PropsWithChildren) {
           if (error) setBackendState("error");
         });
   }
+  function cancelHandoff(id: string) {
+    const handoff = handoffs.find((item) => item.id === id);
+    const actor = members.find((item) => item.id === activeMemberId);
+    if (
+      !handoff ||
+      !actor ||
+      (handoff.status !== "SCHEDULED" && handoff.status !== "READY") ||
+      (handoff.fromMemberId !== activeMemberId &&
+        actor.role !== "OWNER" &&
+        actor.role !== "PARENT_GUARDIAN")
+    )
+      return;
+    setHandoffs((items) =>
+      items.map((item) =>
+        item.id === id ? { ...item, status: "CANCELLED" } : item,
+      ),
+    );
+    if (supabase)
+      void supabase
+        .from("handoffs")
+        .update({ status: "CANCELLED" })
+        .eq("id", id)
+        .in("status", ["SCHEDULED", "READY"])
+        .select("id")
+        .maybeSingle()
+        .then(({ error, data }) => {
+          if (error || !data) {
+            setBackendState("error");
+            void refreshRemote();
+          }
+        });
+  }
+
   function markHandoffReady(id: string) {
     setHandoffs((items) =>
       items.map((item) =>
@@ -754,10 +902,42 @@ export function VillageProvider({ children: content }: PropsWithChildren) {
   }
 
   function removeMember(id: string) {
+    const now = new Date();
+    const releasedEvents = new Set(
+      events
+        .filter(
+          (event) =>
+            event.status === "SCHEDULED" &&
+            event.caregiverId === id &&
+            new Date(event.startsAt) > now,
+        )
+        .map((event) => event.id),
+    );
+    setHelpRequests((items) =>
+      items.map((request) => {
+        const released =
+          request.status === "ASSIGNED" &&
+          request.assignedMemberId === id &&
+          releasedEvents.has(request.eventId);
+        const open = request.status === "OPEN" || released;
+        if (!open) return request;
+        const { [id]: _removed, ...responses } = request.recipientResponses;
+        return {
+          ...request,
+          ...(released
+            ? { status: "OPEN" as const, assignedMemberId: undefined }
+            : {}),
+          recipientIds: request.recipientIds.filter(
+            (memberId) => memberId !== id,
+          ),
+          recipientResponses: responses,
+        };
+      }),
+    );
     setMembers((items) => items.filter((member) => member.id !== id));
     setEvents((items) =>
       items.map((event) =>
-        event.caregiverId === id && new Date(event.startsAt) > new Date()
+        releasedEvents.has(event.id)
           ? { ...event, caregiverId: undefined }
           : event,
       ),
@@ -971,10 +1151,12 @@ export function VillageProvider({ children: content }: PropsWithChildren) {
     removeHelpRequestType,
     acceptHelpRequest,
     declineHelpRequest,
+    addHelpRequestRecipients,
     closeHelpRequest,
     createHandoff,
     toggleHandoffItem,
     markHandoffReady,
+    cancelHandoff,
     acknowledgeHandoff,
     inviteMember,
     removeMember,

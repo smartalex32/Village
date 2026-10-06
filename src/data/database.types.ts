@@ -329,6 +329,18 @@ export type Database = {
         Args: Record<string, Json>;
         Returns: string;
       };
+      update_care_event: {
+        Args: { p_event_id: string; p_changes: Json };
+        Returns: undefined;
+      };
+      add_help_request_recipients: {
+        Args: {
+          p_request_id: string;
+          p_recipient_member_ids: string[];
+          p_operation_id: string;
+        };
+        Returns: string;
+      };
       accept_help_request: {
         Args: { p_request_id: string };
         Returns: string;

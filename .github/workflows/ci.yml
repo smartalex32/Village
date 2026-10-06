@@ -13,10 +13,12 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm ls --all --json > /dev/null
       - run: npm run format:check
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run test:ci
+      - run: npm run test:db:local
       - run: npx expo export --platform web
   database:
     runs-on: ubuntu-latest

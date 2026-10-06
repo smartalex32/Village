@@ -1,11 +1,16 @@
 import { useLocalSearchParams } from "expo-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { AppHeader, Avatar, Button, Field, Screen } from "@/src/components/ui";
 import { isEligibleForHelpType } from "@/src/domain/helpTypes";
 import { useVillage } from "@/src/providers/VillageProvider";
 import { colors, radius, spacing } from "@/src/theme/tokens";
 import { useAppRouter } from "@/src/lib/useAppRouter";
+import { HouseholdDateTimeFields } from "@/src/components/HouseholdDateTimeFields";
+import {
+  householdDateTime,
+  resolveHouseholdDateTime,
+} from "@/src/lib/dateTime";
 
 export default function HelpRequestScreen() {
   const router = useAppRouter();
@@ -17,46 +22,70 @@ export default function HelpRequestScreen() {
   const [childId, setChildId] = useState(
     linked?.childId ?? activeChildren[0]?.id ?? "",
   );
-  const [location, setLocation] = useState(
-    linked?.location ?? "Westside Elementary",
-  );
+  const [location, setLocation] = useState(linked?.location ?? "");
   const [notes, setNotes] = useState("");
   const [context, setContext] = useState("");
   const [recipientIds, setRecipientIds] = useState<string[]>([]);
-  const startsAt = useMemo(() => {
-    if (linked) return linked.startsAt;
-    const date = new Date();
-    date.setHours(15, 15, 0, 0);
-    if (date < new Date()) date.setDate(date.getDate() + 1);
-    return date.toISOString();
-  }, [linked]);
+  const [when, setWhen] = useState(() =>
+    householdDateTime(
+      linked?.startsAt ?? new Date(Date.now() + 3600000),
+      data.householdTimezone,
+    ),
+  );
+  const requestWhen = linked
+    ? householdDateTime(linked.startsAt, data.householdTimezone)
+    : when;
+  const schedule = resolveHouseholdDateTime(
+    requestWhen,
+    data.householdTimezone,
+    linked?.startsAt,
+  );
+  const linkedUnavailable = Boolean(
+    eventId && (!linked || linked.status !== "SCHEDULED" || linked.caregiverId),
+  );
+  const existingRequest = linked
+    ? data.helpRequests.find((request) => request.eventId === linked.id)
+    : undefined;
   const selectedType =
     data.helpRequestTypes.find((item) => item.id === typeId) ??
     data.helpRequestTypes.find((item) => item.label === linked?.type) ??
     data.helpRequestTypes.find((item) => item.capability === linked?.type) ??
     data.helpRequestTypes[0];
+  const requestChildId = linked?.childId ?? childId;
+  const requestLocation = linked ? (linked.location ?? "") : location;
   const recipients = selectedType
     ? data.members.filter(
         (member) =>
           member.id !== data.currentMemberId &&
-          isEligibleForHelpType(member, childId, selectedType),
+          isEligibleForHelpType(member, requestChildId, selectedType),
       )
     : [];
+  const eligibleRecipientIds = recipientIds.filter((id) =>
+    recipients.some((member) => member.id === id),
+  );
   function toggle(id: string) {
     setRecipientIds((items) =>
       items.includes(id) ? items.filter((item) => item !== id) : [...items, id],
     );
   }
   function submit() {
-    if (!selectedType) return;
+    if (
+      !selectedType ||
+      !schedule.iso ||
+      !requestLocation.trim() ||
+      !eligibleRecipientIds.length ||
+      linkedUnavailable ||
+      existingRequest
+    )
+      return;
     const request = data.createHelpRequest({
-      childId,
+      childId: requestChildId,
       type: selectedType,
-      startsAt,
-      location,
+      startsAt: linked?.startsAt ?? schedule.iso,
+      location: requestLocation,
       context,
       notes,
-      recipientIds,
+      recipientIds: eligibleRecipientIds,
       eventId,
     });
     router.replace({ pathname: "/help-sent", params: { id: request.id } });
@@ -101,14 +130,15 @@ export default function HelpRequestScreen() {
           <Pressable
             key={child.id}
             accessibilityRole="button"
-            accessibilityState={{ selected: childId === child.id }}
+            accessibilityState={{ selected: requestChildId === child.id }}
+            disabled={Boolean(linked)}
             onPress={() => {
               setChildId(child.id);
               setRecipientIds([]);
             }}
             style={[
               styles.personChip,
-              childId === child.id && styles.personChipActive,
+              requestChildId === child.id && styles.personChipActive,
             ]}
           >
             <Avatar name={child.firstName} uri={child.avatarUrl} size={28} />
@@ -116,26 +146,60 @@ export default function HelpRequestScreen() {
           </Pressable>
         ))}
       </View>
-      <View style={styles.fieldRow}>
-        <View style={styles.halfField}>
-          <Field
-            label="When?"
-            value={new Intl.DateTimeFormat(undefined, {
-              dateStyle: "medium",
-              timeStyle: "short",
-            }).format(new Date(startsAt))}
-            editable={false}
+      <HouseholdDateTimeFields
+        label="When"
+        value={requestWhen}
+        onChange={setWhen}
+        timeZone={data.householdTimezone}
+        preferredInstant={linked?.startsAt}
+        editable={!linked}
+      />
+      <Field
+        label="From where?"
+        value={requestLocation}
+        onChangeText={setLocation}
+        editable={!linked}
+        placeholder="Location"
+      />
+      {linked ? (
+        <>
+          <Text style={styles.empty}>
+            This request uses the event’s child, time, and location.
+          </Text>
+          <Button
+            label="Edit Event Details"
+            variant="secondary"
+            onPress={() =>
+              router.push({
+                pathname: "/event-form",
+                params: { id: linked.id },
+              })
+            }
           />
-        </View>
-        <View style={styles.halfField}>
-          <Field
-            label="From where?"
-            value={location}
-            onChangeText={setLocation}
-            placeholder="Location"
+        </>
+      ) : null}
+      {existingRequest ? (
+        <>
+          <Text style={styles.empty}>
+            This event already has a help request.
+          </Text>
+          <Button
+            label="View Existing Request"
+            variant="secondary"
+            onPress={() =>
+              router.replace({
+                pathname: "/help-sent",
+                params: { id: existingRequest.id },
+              })
+            }
           />
-        </View>
-      </View>
+        </>
+      ) : linkedUnavailable ? (
+        <Text style={styles.empty}>
+          Help can only be requested for a scheduled event without an assigned
+          caregiver.
+        </Text>
+      ) : null}
       <Text style={styles.label}>Who should receive the request?</Text>
       <ScrollView
         horizontal
@@ -194,9 +258,12 @@ export default function HelpRequestScreen() {
         onPress={submit}
         disabled={
           !selectedType ||
-          !childId ||
-          !location.trim() ||
-          !recipientIds.length ||
+          !schedule.iso ||
+          linkedUnavailable ||
+          Boolean(existingRequest) ||
+          !requestChildId ||
+          !requestLocation.trim() ||
+          !eligibleRecipientIds.length ||
           (selectedType.isOther && !context.trim())
         }
       />
@@ -209,8 +276,6 @@ const styles = StyleSheet.create({
   chips: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
   helpTypes: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
   horizontalOptions: { gap: spacing.sm, paddingRight: spacing.md },
-  fieldRow: { flexDirection: "row", gap: spacing.sm },
-  halfField: { flex: 1, minWidth: 0 },
   chip: {
     minHeight: 40,
     borderRadius: radius.sm,

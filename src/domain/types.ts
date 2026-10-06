@@ -146,11 +146,14 @@ export interface HelpRequest {
   eventId: string;
   typeId: string;
   typeLabel: string;
+  requiredCapability?: Capability;
   startsAt: string;
   location: string;
   context?: string;
   notes?: string;
   recipientIds: string[];
+  recipientResponses: Record<string, "PENDING" | "ACCEPTED" | "DECLINED">;
+  createdByMemberId: string;
   assignedMemberId?: string;
   status: HelpRequestStatus;
 }

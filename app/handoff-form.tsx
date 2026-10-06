@@ -1,10 +1,15 @@
 import { randomUUID } from "expo-crypto";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { AppHeader, Button, Field, Screen } from "@/src/components/ui";
 import { useVillage } from "@/src/providers/VillageProvider";
 import { colors, radius, spacing } from "@/src/theme/tokens";
 import { useAppRouter } from "@/src/lib/useAppRouter";
+import { HouseholdDateTimeFields } from "@/src/components/HouseholdDateTimeFields";
+import {
+  householdDateTime,
+  resolveHouseholdDateTime,
+} from "@/src/lib/dateTime";
 
 export default function HandoffFormScreen() {
   const router = useAppRouter();
@@ -31,11 +36,10 @@ export default function HandoffFormScreen() {
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState("Backpack, Water bottle");
   const [associatedEventId, setAssociatedEventId] = useState<string>();
-  const scheduledAt = useMemo(() => {
-    const date = new Date();
-    date.setHours(date.getHours() + 1, 0, 0, 0);
-    return date.toISOString();
-  }, []);
+  const [when, setWhen] = useState(() =>
+    householdDateTime(new Date(Date.now() + 3600000), data.householdTimezone),
+  );
+  const schedule = resolveHouseholdDateTime(when, data.householdTimezone);
   const upcoming = data.events
     .filter(
       (event) => event.childId === childId && event.status === "SCHEDULED",
@@ -58,11 +62,19 @@ export default function HandoffFormScreen() {
   }
 
   function save() {
+    if (
+      !schedule.iso ||
+      !childId ||
+      !fromMemberId ||
+      !toMemberId ||
+      fromMemberId === toMemberId
+    )
+      return;
     const handoff = data.createHandoff({
       childId,
       fromMemberId,
       toMemberId,
-      scheduledAt,
+      scheduledAt: schedule.iso,
       location: location.trim() || undefined,
       notes: notes.trim() || undefined,
       associatedEventId,
@@ -117,21 +129,13 @@ export default function HandoffFormScreen() {
         value={toMemberId}
         onChange={setToMemberId}
       />
-      <View style={styles.fieldRow}>
-        <View style={styles.halfField}>
-          <Field
-            label="When"
-            value={new Intl.DateTimeFormat(undefined, {
-              dateStyle: "medium",
-              timeStyle: "short",
-            }).format(new Date(scheduledAt))}
-            editable={false}
-          />
-        </View>
-        <View style={styles.halfField}>
-          <Field label="Location" value={location} onChangeText={setLocation} />
-        </View>
-      </View>
+      <HouseholdDateTimeFields
+        label="When"
+        value={when}
+        onChange={setWhen}
+        timeZone={data.householdTimezone}
+      />
+      <Field label="Location" value={location} onChangeText={setLocation} />
       <View style={styles.fieldRow}>
         <View style={styles.halfField}>
           <Field
@@ -165,7 +169,13 @@ export default function HandoffFormScreen() {
       <Button
         label="Create Handoff"
         onPress={save}
-        disabled={!childId || !fromMemberId || !toMemberId}
+        disabled={
+          !schedule.iso ||
+          !childId ||
+          !fromMemberId ||
+          !toMemberId ||
+          fromMemberId === toMemberId
+        }
       />
     </Screen>
   );
