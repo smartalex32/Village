@@ -1,10 +1,15 @@
 import { useLocalSearchParams } from "expo-router";
-import { useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
 import { AppHeader, Button, Field, Screen } from "@/src/components/ui";
 import { useVillage } from "@/src/providers/VillageProvider";
 import { colors, radius, spacing } from "@/src/theme/tokens";
 import { useAppRouter } from "@/src/lib/useAppRouter";
+import { HouseholdDateTimeFields } from "@/src/components/HouseholdDateTimeFields";
+import {
+  householdDateTime,
+  resolveHouseholdDateTime,
+} from "@/src/lib/dateTime";
 
 export default function EventFormScreen() {
   const router = useAppRouter();
@@ -20,21 +25,69 @@ export default function EventFormScreen() {
   const [caregiverId, setCaregiverId] = useState<string | undefined>(
     existing?.caregiverId,
   );
-  const startsAt = useMemo(() => {
-    if (existing) return existing.startsAt;
-    const date = new Date();
-    date.setHours(date.getHours() + 1, 0, 0, 0);
-    return date.toISOString();
-  }, [existing]);
+  const [when, setWhen] = useState(() =>
+    householdDateTime(
+      existing?.startsAt ?? new Date(Date.now() + 3600000),
+      data.householdTimezone,
+    ),
+  );
+  const [hasEnd, setHasEnd] = useState(Boolean(existing?.endsAt));
+  const [end, setEnd] = useState(() =>
+    householdDateTime(
+      existing?.endsAt ??
+        new Date(
+          new Date(existing?.startsAt ?? Date.now()).getTime() + 7200000,
+        ),
+      data.householdTimezone,
+    ),
+  );
+  const startResult = resolveHouseholdDateTime(
+    when,
+    data.householdTimezone,
+    existing?.startsAt,
+  );
+  const endResult = hasEnd
+    ? resolveHouseholdDateTime(end, data.householdTimezone, existing?.endsAt)
+    : undefined;
+  const endError =
+    endResult?.iso &&
+    startResult.iso &&
+    new Date(endResult.iso) <= new Date(startResult.iso)
+      ? "End time must be after the start time."
+      : undefined;
+  const closed = Boolean(existing && existing.status !== "SCHEDULED");
+  const activeRequest = existing
+    ? data.helpRequests.find(
+        (request) =>
+          request.eventId === existing.id &&
+          (request.status === "OPEN" || request.status === "ASSIGNED"),
+      )
+    : undefined;
+  const currentMember = data.members.find(
+    (member) => member.id === data.currentMemberId,
+  );
+  const canManage =
+    currentMember?.role === "OWNER" ||
+    currentMember?.role === "PARENT_GUARDIAN";
+  const canSave = Boolean(
+    !closed &&
+    canManage &&
+    title.trim() &&
+    childId &&
+    startResult.iso &&
+    (!hasEnd || (endResult?.iso && !endError)),
+  );
   function save() {
+    if (!canSave || !startResult.iso) return;
     const input = {
       childId,
       type: existing?.type ?? "OTHER",
-      title,
-      startsAt,
+      title: title.trim(),
+      startsAt: startResult.iso,
+      endsAt: hasEnd ? endResult?.iso : undefined,
       location,
       caregiverId,
-      requiresCaregiver: true,
+      requiresCaregiver: existing?.requiresCaregiver ?? true,
     };
     if (existing) data.updateEvent(existing.id, input);
     else data.addEvent(input);
@@ -62,6 +115,7 @@ export default function EventFormScreen() {
             key={child.id}
             accessibilityRole="button"
             accessibilityState={{ selected: childId === child.id }}
+            disabled={closed || !canManage || Boolean(activeRequest)}
             onPress={() => setChildId(child.id)}
             style={[styles.chip, childId === child.id && styles.selected]}
           >
@@ -76,32 +130,74 @@ export default function EventFormScreen() {
           </Pressable>
         ))}
       </ScrollView>
+      {closed ? (
+        <Text style={styles.label}>This event is completed or cancelled.</Text>
+      ) : null}
+      {activeRequest ? (
+        <>
+          <Text style={styles.label}>
+            Manage the child and caregiver through the active help request.
+          </Text>
+          <Button
+            label="View Help Request"
+            variant="ghost"
+            onPress={() =>
+              router.push({
+                pathname: "/help-sent",
+                params: { id: activeRequest.id },
+              })
+            }
+          />
+        </>
+      ) : null}
       <Field
         label="Event title"
         placeholder="School pickup"
         value={title}
         onChangeText={setTitle}
+        editable={!closed && canManage}
       />
-      <View style={styles.fieldRow}>
-        <View style={styles.halfField}>
-          <Field
-            label="When"
-            value={new Intl.DateTimeFormat(undefined, {
-              dateStyle: "medium",
-              timeStyle: "short",
-            }).format(new Date(startsAt))}
-            editable={false}
+      <HouseholdDateTimeFields
+        label="Starts"
+        value={when}
+        onChange={setWhen}
+        timeZone={data.householdTimezone}
+        preferredInstant={existing?.startsAt}
+        editable={!closed && canManage}
+      />
+      {hasEnd ? (
+        <>
+          <HouseholdDateTimeFields
+            label="Ends"
+            value={end}
+            onChange={setEnd}
+            timeZone={data.householdTimezone}
+            preferredInstant={existing?.endsAt}
+            error={endError}
+            editable={!closed && canManage}
           />
-        </View>
-        <View style={styles.halfField}>
-          <Field
-            label="Location"
-            placeholder="Where?"
-            value={location}
-            onChangeText={setLocation}
+          <Button
+            label="Remove end time"
+            variant="ghost"
+            onPress={() => setHasEnd(false)}
+            disabled={closed || !canManage}
           />
-        </View>
-      </View>
+        </>
+      ) : (
+        <Button
+          label="Add end time (optional)"
+          variant="ghost"
+          onPress={() => setHasEnd(true)}
+          disabled={closed || !canManage}
+        />
+      )}
+      <Field
+        label="Location"
+        placeholder="Where?"
+        value={location}
+        onChangeText={setLocation}
+        editable={!closed && canManage}
+      />
       <Text style={styles.label}>Assigned caregiver</Text>
       <ScrollView
         horizontal
@@ -111,6 +207,7 @@ export default function EventFormScreen() {
         <Pressable
           accessibilityRole="button"
           accessibilityState={{ selected: !caregiverId }}
+          disabled={closed || !canManage || Boolean(activeRequest)}
           onPress={() => setCaregiverId(undefined)}
           style={[styles.chip, !caregiverId && styles.selected]}
         >
@@ -125,6 +222,7 @@ export default function EventFormScreen() {
               key={member.id}
               accessibilityRole="button"
               accessibilityState={{ selected: caregiverId === member.id }}
+              disabled={closed || !canManage || Boolean(activeRequest)}
               onPress={() => setCaregiverId(member.id)}
               style={[
                 styles.chip,
@@ -145,9 +243,19 @@ export default function EventFormScreen() {
       <Button
         label={existing ? "Save Changes" : "Save Event"}
         onPress={save}
-        disabled={!title.trim() || !childId}
+        disabled={!canSave}
       />
-      {existing ? (
+      {existing && canManage && !closed ? (
+        <Button
+          label="Mark Complete"
+          variant="secondary"
+          onPress={() => {
+            data.updateEvent(existing.id, { status: "COMPLETED" });
+            router.back();
+          }}
+        />
+      ) : null}
+      {existing && canManage && !closed ? (
         <Button
           label="Cancel Event"
           variant="danger"
@@ -164,8 +272,6 @@ const styles = StyleSheet.create({
   screen: { gap: spacing.sm, paddingBottom: spacing.md },
   label: { color: colors.ink, fontWeight: "800" },
   chips: { gap: spacing.sm, paddingRight: spacing.md },
-  fieldRow: { flexDirection: "row", gap: spacing.sm },
-  halfField: { flex: 1, minWidth: 0 },
   chip: {
     borderWidth: 1,
     borderColor: colors.line,

@@ -31,10 +31,15 @@ npm run format:check
 npm run typecheck
 npm run lint
 npm run test:ci
+npm run test:db:local
 npx expo export --platform web
 ```
 
+`npm run test:db:local` uses an in-memory PGlite database with [Drizzle's PGlite driver](https://orm.drizzle.team/docs/connect-pglite), applies the Supabase migrations, and runs the database pgTAP tests. It also checks authenticated event edits, parameterized JSON/timestamps, and transaction rollback through Drizzle. It needs no PostgreSQL installation or Docker service. The harness supplies local Auth and Storage fixtures; hosted Auth, push delivery, realtime, and concurrent connections still need integration checks against Supabase. CI retains Supabase checks for compatibility with the configured PostgreSQL version.
+
 With the local Supabase stack running, also run `npm run supabase:lint` and `npm run supabase:test`. Maestro flows live in `.maestro/`; the Android EAS workflow runs them against an installable test build.
+
+Dependency updates stay on stable Expo SDK 57. React, React Native, and their native companion packages follow its supported versions. Jest and its type definitions stay on 29 for `jest-expo`; ESLint stays on 9 for the React/import plugins; TypeScript stays on 6 for `typescript-eslint`. The test renderer stays on 1.2 because 1.3 pulls in a reconciler that requires React 19.3. Check `npm ls --all` after dependency changes; CI checks the complete dependency graph too. Async Storage 3.1 is retained for development builds and differs from Expo Go's bundled 2.2 version.
 
 The local demo covers onboarding, household dashboards, invitations and permission presets, family profiles, scheduling, help requests, and one-step handoff acknowledgment. Production mode adds persisted sessions, private avatar uploads, realtime reconciliation, Resend invitations, and Expo push routing through Supabase.
 

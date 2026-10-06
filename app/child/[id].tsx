@@ -20,11 +20,15 @@ import { useVillage } from "@/src/providers/VillageProvider";
 import { colors, spacing } from "@/src/theme/tokens";
 import { useAppRouter } from "@/src/lib/useAppRouter";
 import { formatDateInput, isValidDateInput } from "@/src/lib/dateInput";
+import { nextActiveHandoff, isHandoffOverdue } from "@/src/domain/coordination";
+import { useCurrentTime } from "@/src/lib/useCurrentTime";
+import { formatHouseholdDate } from "@/src/lib/dateTime";
 
 export default function ChildDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useAppRouter();
   const data = useVillage();
+  const now = useCurrentTime();
   const child = data.children.find((item) => item.id === id);
   const [firstName, setFirstName] = useState(child?.firstName ?? "");
   const [birthDate, setBirthDate] = useState(child?.birthDate ?? "");
@@ -102,12 +106,7 @@ export default function ChildDetailScreen() {
     .filter((event) => event.childId === id && event.status === "SCHEDULED")
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt))
     .slice(0, 4);
-  const handoff = data.handoffs.find(
-    (item) =>
-      item.childId === id &&
-      item.status !== "COMPLETED" &&
-      item.status !== "CANCELLED",
-  );
+  const handoff = nextActiveHandoff(data.handoffs, child.id);
   const isDirty =
     firstName !== child.firstName ||
     birthDate !== (child.birthDate ?? "") ||
@@ -195,7 +194,13 @@ export default function ChildDetailScreen() {
       )}
       {handoff ? (
         <>
-          <SectionHeader title="Next handoff" />
+          <SectionHeader
+            title={
+              isHandoffOverdue(handoff, now)
+                ? "Overdue handoff"
+                : "Next handoff"
+            }
+          />
           <Card style={styles.handoff}>
             <View style={styles.flex}>
               <Text style={uiStyles.strong}>
@@ -210,7 +215,17 @@ export default function ChildDetailScreen() {
                 }
               </Text>
               <Text style={uiStyles.muted}>
-                {format(new Date(handoff.scheduledAt), "EEEE 'at' h:mm a")}
+                {formatHouseholdDate(
+                  handoff.scheduledAt,
+                  data.householdTimezone,
+                  {
+                    weekday: "long",
+                    month: "short",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                  },
+                )}
               </Text>
             </View>
             <Pressable

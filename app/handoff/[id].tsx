@@ -1,5 +1,4 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { format } from "date-fns";
 import { useLocalSearchParams } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import {
@@ -14,11 +13,15 @@ import {
 import { useVillage } from "@/src/providers/VillageProvider";
 import { colors, spacing } from "@/src/theme/tokens";
 import { useAppRouter } from "@/src/lib/useAppRouter";
+import { formatHouseholdDate } from "@/src/lib/dateTime";
+import { useCurrentTime } from "@/src/lib/useCurrentTime";
+import { isHandoffOverdue } from "@/src/domain/coordination";
 
 export default function HandoffDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useAppRouter();
   const data = useVillage();
+  const now = useCurrentTime();
   const handoff = data.handoffs.find((item) => item.id === id);
   if (!handoff)
     return (
@@ -35,6 +38,14 @@ export default function HandoffDetailScreen() {
   const isClosed =
     handoff.status === "COMPLETED" || handoff.status === "CANCELLED";
   const isRecipient = handoff.toMemberId === data.currentMemberId;
+  const currentMember = data.members.find(
+    (member) => member.id === data.currentMemberId,
+  );
+  const canCancel =
+    handoff.fromMemberId === data.currentMemberId ||
+    currentMember?.role === "OWNER" ||
+    currentMember?.role === "PARENT_GUARDIAN";
+  const overdue = isHandoffOverdue(handoff, now);
   return (
     <Screen scroll={false} style={styles.screen}>
       <AppHeader
@@ -43,14 +54,19 @@ export default function HandoffDetailScreen() {
         right={
           <Pill
             label={
-              handoff.status.charAt(0) + handoff.status.slice(1).toLowerCase()
+              overdue
+                ? "Overdue"
+                : handoff.status.charAt(0) +
+                  handoff.status.slice(1).toLowerCase()
             }
             tone={
-              handoff.status === "COMPLETED"
-                ? "green"
-                : handoff.status === "CANCELLED"
-                  ? "red"
-                  : "blue"
+              overdue
+                ? "red"
+                : handoff.status === "COMPLETED"
+                  ? "green"
+                  : handoff.status === "CANCELLED"
+                    ? "red"
+                    : "blue"
             }
           />
         }
@@ -68,7 +84,17 @@ export default function HandoffDetailScreen() {
               {from?.displayName} → {to?.displayName}
             </Text>
             <Text style={styles.meta} numberOfLines={1}>
-              {format(new Date(handoff.scheduledAt), "EEEE 'at' h:mm a")}
+              {formatHouseholdDate(
+                handoff.scheduledAt,
+                data.householdTimezone,
+                {
+                  weekday: "long",
+                  month: "short",
+                  day: "numeric",
+                  hour: "numeric",
+                  minute: "2-digit",
+                },
+              )}
               {handoff.location ? ` · ${handoff.location}` : ""}
             </Text>
           </View>
@@ -76,13 +102,27 @@ export default function HandoffDetailScreen() {
         {upcoming ? (
           <Text style={styles.upcoming} numberOfLines={1}>
             Upcoming: {upcoming.title} at{" "}
-            {format(new Date(upcoming.startsAt), "h:mm a")}
+            {formatHouseholdDate(upcoming.startsAt, data.householdTimezone, {
+              hour: "numeric",
+              minute: "2-digit",
+            })}
           </Text>
         ) : null}
         <Text style={styles.disclaimer} numberOfLines={1}>
           Coordination record—not verified physical location.
         </Text>
       </Card>
+      {overdue ? (
+        <Card style={styles.cancelled}>
+          <Text style={styles.completeTitle}>
+            Receipt has not been acknowledged
+          </Text>
+          <Text style={uiStyles.muted}>
+            The scheduled time has passed. Confirm directly with the caregiver,
+            then acknowledge when the handoff has occurred.
+          </Text>
+        </Card>
+      ) : null}
       <View style={styles.flexibleDetails}>
         <View style={styles.itemsSection}>
           <Text style={styles.sectionTitle}>Items to bring</Text>
@@ -139,20 +179,39 @@ export default function HandoffDetailScreen() {
           {handoff.status === "COMPLETED" ? (
             <Text style={uiStyles.muted}>
               {handoff.acceptedAt
-                ? format(new Date(handoff.acceptedAt), "MMM d 'at' h:mm a")
+                ? formatHouseholdDate(
+                    handoff.acceptedAt,
+                    data.householdTimezone,
+                    {
+                      month: "short",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    },
+                  )
                 : "Responsibility transferred."}
             </Text>
           ) : null}
         </Card>
       ) : (
         <View style={styles.actions}>
+          {canCancel ? (
+            <Button
+              label="Cancel Handoff"
+              variant="danger"
+              onPress={() => data.cancelHandoff(handoff.id)}
+            />
+          ) : null}
           <Button
             label={
               handoff.status === "READY" ? "Ready for Handoff" : "Mark as Ready"
             }
             variant="secondary"
             onPress={() => data.markHandoffReady(handoff.id)}
-            disabled={handoff.status === "READY"}
+            disabled={
+              handoff.status === "READY" ||
+              handoff.fromMemberId !== data.currentMemberId
+            }
           />
           {isRecipient ? (
             <Button

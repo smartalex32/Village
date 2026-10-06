@@ -70,6 +70,17 @@ export function EventRow({
         {event.location ? (
           <Text style={styles.meta}>{event.location}</Text>
         ) : null}
+        {event.endsAt ? (
+          <Text style={styles.meta}>
+            Until{" "}
+            {formatHouseholdDate(event.endsAt, timeZone, {
+              month: "short",
+              day: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+            })}
+          </Text>
+        ) : null}
         <Text style={[styles.meta, missing && styles.missing]}>
           {missing ? "No caregiver assigned" : (caregiver?.displayName ?? "")}
         </Text>

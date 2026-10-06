@@ -1,4 +1,5 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useState } from "react";
 import {
   Pressable,
   StyleSheet,
@@ -20,42 +21,66 @@ import { formatHouseholdDate, householdDateKey } from "@/src/lib/dateTime";
 import { todaySummaryLimits } from "@/src/lib/todayLayout";
 import { colors, radius, spacing } from "@/src/theme/tokens";
 import { useAppRouter } from "@/src/lib/useAppRouter";
+import { useCurrentTime } from "@/src/lib/useCurrentTime";
+import {
+  coordinationAttention,
+  isHandoffOverdue,
+  latestAcknowledgment,
+  nextActiveHandoff,
+  nobodyAvailable,
+} from "@/src/domain/coordination";
 
 export default function TodayScreen() {
   const router = useAppRouter();
   const data = useVillage();
   const { height } = useWindowDimensions();
   const activeChildren = data.children.filter((child) => !child.archived);
-  const now = new Date();
+  const now = useCurrentTime();
+  const [showAllAttention, setShowAllAttention] = useState(false);
   const today = data.events
     .filter(
       (event) =>
-        householdDateKey(event.startsAt, data.householdTimezone) ===
-          householdDateKey(now, data.householdTimezone) &&
+        (householdDateKey(event.startsAt, data.householdTimezone) ===
+          householdDateKey(now, data.householdTimezone) ||
+          (event.endsAt &&
+            new Date(event.startsAt) < now &&
+            new Date(event.endsAt) > now)) &&
         event.status === "SCHEDULED",
     )
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
   const summaryLimits = todaySummaryLimits(height, activeChildren.length);
   const visibleSchedule = today
-    .filter((event) => new Date(event.startsAt).getTime() >= now.getTime())
+    .filter(
+      (event) =>
+        new Date(event.startsAt).getTime() >= now.getTime() ||
+        (event.endsAt && new Date(event.endsAt) > now),
+    )
     .slice(0, summaryLimits.schedule);
   const unread = data.notifications.filter((item) => !item.read).length;
-  const activeRequests = data.helpRequests.filter(
-    (request) => request.status === "OPEN" || request.status === "ASSIGNED",
-  );
   const currentMember = data.members.find(
     (member) => member.id === data.currentMemberId,
   );
   const canManage =
     currentMember?.role === "OWNER" ||
     currentMember?.role === "PARENT_GUARDIAN";
-  const visibleAttention = [
-    ...data.gaps.map((gap) => ({ kind: "gap" as const, gap })),
-    ...activeRequests.map((request) => ({
-      kind: "request" as const,
-      request,
-    })),
-  ].slice(0, summaryLimits.attention);
+  const activeChildIds = new Set(activeChildren.map((child) => child.id));
+  const attention = coordinationAttention(
+    data.events,
+    data.helpRequests,
+    data.handoffs,
+    now,
+  ).filter((item) =>
+    activeChildIds.has(
+      item.kind === "gap"
+        ? item.gap.childId
+        : item.kind === "request"
+          ? item.request.childId
+          : item.handoff.childId,
+    ),
+  );
+  const visibleAttention = showAllAttention
+    ? attention
+    : attention.slice(0, summaryLimits.attention);
 
   return (
     <Screen
@@ -112,25 +137,11 @@ export default function TodayScreen() {
       {activeChildren.length ? (
         <View style={styles.childrenGrid}>
           {activeChildren.map((child, index) => {
-            const latestReceipt = data.handoffs
-              .filter(
-                (handoff) =>
-                  handoff.childId === child.id &&
-                  handoff.status === "COMPLETED" &&
-                  handoff.acceptedAt,
-              )
-              .sort((a, b) =>
-                (b.acceptedAt ?? "").localeCompare(a.acceptedAt ?? ""),
-              )[0];
+            const latestReceipt = latestAcknowledgment(data.handoffs, child.id);
             const caregiver = data.members.find(
               (member) => member.id === latestReceipt?.toMemberId,
             );
-            const handoff = data.handoffs.find(
-              (item) =>
-                item.childId === child.id &&
-                item.status !== "COMPLETED" &&
-                item.status !== "CANCELLED",
-            );
+            const handoff = nextActiveHandoff(data.handoffs, child.id);
             const fromName = data.members.find(
               (member) => member.id === handoff?.fromMemberId,
             )?.displayName;
@@ -151,21 +162,38 @@ export default function TodayScreen() {
                     <Text style={styles.childName} numberOfLines={1}>
                       {child.firstName}
                     </Text>
-                    <Text style={styles.currentLabel}>Currently with</Text>
-                    <Text style={styles.caregiver} numberOfLines={1}>
-                      {caregiver?.displayName ?? "Not acknowledged"}
+                    <Text style={styles.currentLabel}>
+                      Last acknowledged with
                     </Text>
+                    <Text style={styles.caregiver} numberOfLines={1}>
+                      {caregiver?.displayName ??
+                        (latestReceipt
+                          ? "Former caregiver"
+                          : "No acknowledgment yet")}
+                    </Text>
+                    {latestReceipt?.acceptedAt ? (
+                      <Text style={styles.currentLabel}>
+                        {formatHouseholdDate(
+                          latestReceipt.acceptedAt,
+                          data.householdTimezone,
+                          {
+                            month: "short",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "2-digit",
+                          },
+                        )}
+                      </Text>
+                    ) : null}
                   </View>
                   <Pill
-                    label={
-                      caregiver?.id === data.currentMemberId
-                        ? "With you"
-                        : caregiver
-                          ? "Coordinated"
-                          : "No receipt"
-                    }
+                    label={latestReceipt ? "Acknowledged" : "No receipt"}
                     tone={
-                      caregiver?.id === data.currentMemberId ? "blue" : "green"
+                      !latestReceipt
+                        ? "amber"
+                        : caregiver?.id === data.currentMemberId
+                          ? "blue"
+                          : "green"
                     }
                   />
                 </View>
@@ -188,11 +216,18 @@ export default function TodayScreen() {
                     />
                     <View style={styles.flex}>
                       <Text style={styles.nextHandoffTime} numberOfLines={1}>
-                        Next ·{" "}
+                        {isHandoffOverdue(handoff, now)
+                          ? "Overdue · "
+                          : "Next · "}
                         {formatHouseholdDate(
                           handoff.scheduledAt,
                           data.householdTimezone,
-                          { hour: "numeric", minute: "2-digit" },
+                          {
+                            month: "short",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "2-digit",
+                          },
                         )}
                       </Text>
                       <Text style={styles.nextHandoffPeople} numberOfLines={1}>
@@ -241,8 +276,18 @@ export default function TodayScreen() {
               </View>
               <View style={styles.flex}>
                 <Text style={styles.scheduleEyebrow}>
-                  {index === 0 ? "Up next · " : ""}
+                  {new Date(event.startsAt) < now
+                    ? "In progress · "
+                    : index === 0
+                      ? "Up next · "
+                      : ""}
                   {formatHouseholdDate(event.startsAt, data.householdTimezone, {
+                    ...(householdDateKey(
+                      event.startsAt,
+                      data.householdTimezone,
+                    ) !== householdDateKey(now, data.householdTimezone)
+                      ? { month: "short", day: "numeric" }
+                      : {}),
                     hour: "numeric",
                     minute: "2-digit",
                   })}
@@ -276,13 +321,31 @@ export default function TodayScreen() {
             color={colors.forest}
           />
           <View style={styles.flex}>
-            <Text style={styles.emptyTitle}>Today is wrapped up</Text>
-            <Text style={uiStyles.muted}>No more scheduled care today.</Text>
+            <Text style={styles.emptyTitle}>No later events today</Text>
+            <Text style={uiStyles.muted}>
+              Check Schedule for earlier care responsibilities.
+            </Text>
           </View>
         </Card>
       )}
 
-      <SectionHeader title="Needs attention" />
+      <SectionHeader
+        title="Needs attention"
+        action={
+          attention.length > summaryLimits.attention ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setShowAllAttention((value) => !value)}
+            >
+              <Text style={uiStyles.link}>
+                {showAllAttention
+                  ? "Show less"
+                  : `See all (${attention.length})`}
+              </Text>
+            </Pressable>
+          ) : undefined
+        }
+      />
       {visibleAttention.length ? (
         <View style={styles.attentionList}>
           {visibleAttention.map((item) =>
@@ -315,7 +378,9 @@ export default function TodayScreen() {
                       — {item.gap.title}
                     </Text>
                     <Text style={styles.alertMissing}>
-                      No caregiver assigned
+                      {new Date(item.gap.startsAt) < now
+                        ? "Overdue · No caregiver assigned"
+                        : "No caregiver assigned"}
                     </Text>
                   </View>
                   {canManage ? (
@@ -335,6 +400,44 @@ export default function TodayScreen() {
                   ) : null}
                 </View>
               </Card>
+            ) : item.kind === "handoff" ? (
+              <Pressable
+                key={`handoff-${item.handoff.id}`}
+                accessibilityRole="button"
+                accessibilityLabel="View overdue handoff"
+                onPress={() =>
+                  router.push({
+                    pathname: "/handoff/[id]",
+                    params: { id: item.handoff.id },
+                  })
+                }
+              >
+                <Card style={styles.alert}>
+                  <Text style={styles.alertHeading}>
+                    Overdue handoff ·{" "}
+                    {
+                      data.children.find(
+                        (child) => child.id === item.handoff.childId,
+                      )?.firstName
+                    }
+                  </Text>
+                  <Text style={styles.alertBody}>
+                    Receipt has not been acknowledged. Tap to review.
+                  </Text>
+                  <Text style={styles.alertMissing}>
+                    {formatHouseholdDate(
+                      item.handoff.scheduledAt,
+                      data.householdTimezone,
+                      {
+                        month: "short",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                      },
+                    )}
+                  </Text>
+                </Card>
+              </Pressable>
             ) : (
               <Pressable
                 key={`request-${item.request.id}`}
@@ -363,9 +466,11 @@ export default function TodayScreen() {
                       · {item.request.typeLabel.toLowerCase()}
                     </Text>
                     <Text style={uiStyles.muted} numberOfLines={1}>
-                      {item.request.status === "ASSIGNED"
-                        ? "Care is covered. Tap for details."
-                        : "Waiting for a response. Tap for details."}
+                      {nobodyAvailable(item.request)
+                        ? "Nobody available. Tap to ask more people."
+                        : new Date(item.request.startsAt) < now
+                          ? "Overdue · Still waiting for help."
+                          : "Waiting for a response. Tap for details."}
                     </Text>
                   </View>
                   <MaterialCommunityIcons
@@ -386,9 +491,15 @@ export default function TodayScreen() {
             color={colors.forest}
           />
           <View style={styles.flex}>
-            <Text style={styles.emptyTitle}>Everything is covered</Text>
+            <Text style={styles.emptyTitle}>
+              {data.backendState === "error"
+                ? "Coverage needs a refresh"
+                : "No unresolved coverage gaps"}
+            </Text>
             <Text style={uiStyles.muted}>
-              No open requests or coverage gaps.
+              {data.backendState === "error"
+                ? "Reconnect and refresh to check the latest responsibilities."
+                : "No open requests or overdue handoffs."}
             </Text>
           </View>
         </Card>

@@ -17,7 +17,7 @@ const event = (overrides: Partial<CareEvent> = {}): CareEvent => ({
   ...overrides,
 });
 
-test("coverage gaps include only future scheduled responsibilities without a caregiver", () => {
+test("coverage gaps keep overdue responsibilities visible until resolved", () => {
   const now = new Date("2026-09-06T18:00:00.000Z");
   expect(
     coverageGaps(
@@ -26,11 +26,12 @@ test("coverage gaps include only future scheduled responsibilities without a car
         event({ id: "assigned", caregiverId: "grandma" }),
         event({ id: "past", startsAt: "2026-09-06T17:00:00.000Z" }),
         event({ id: "cancelled", status: "CANCELLED" }),
+        event({ id: "completed", status: "COMPLETED" }),
         event({ id: "optional", requiresCaregiver: false }),
       ],
       now,
     ).map((item) => item.id),
-  ).toEqual(["event"]);
+  ).toEqual(["past", "event"]);
 });
 
 test("only an invited caregiver can accept an open unassigned request", () => {
@@ -43,10 +44,18 @@ test("only an invited caregiver can accept an open unassigned request", () => {
     startsAt: "2026-09-06T20:00:00.000Z",
     location: "School",
     recipientIds: ["grandma"],
+    recipientResponses: { grandma: "PENDING" },
+    createdByMemberId: "parent",
     status: "OPEN",
   };
   expect(canAcceptHelp(request, "grandma")).toBe(true);
   expect(canAcceptHelp(request, "stranger")).toBe(false);
+  expect(
+    canAcceptHelp(
+      { ...request, recipientResponses: { grandma: "DECLINED" } },
+      "grandma",
+    ),
+  ).toBe(false);
   expect(canAcceptHelp({ ...request, status: "CANCELLED" }, "grandma")).toBe(
     false,
   );

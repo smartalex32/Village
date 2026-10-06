@@ -89,14 +89,13 @@ export async function loadRemoteVillage(): Promise<RemoteVillageSnapshot | null>
       .order("starts_at"),
     client
       .from("help_requests")
-      .select("*,help_request_recipients(member_id)")
+      .select("*,help_request_recipients(member_id,response)")
       .eq("household_id", householdId)
       .order("created_at", { ascending: false }),
     client
       .from("help_request_types")
       .select("*")
       .eq("household_id", householdId)
-      .is("archived_at", null)
       .order("created_at"),
     client
       .from("handoffs")
@@ -193,6 +192,10 @@ export async function loadRemoteVillage(): Promise<RemoteVillageSnapshot | null>
       eventId: row.event_id,
       typeId: row.request_type,
       typeLabel: row.request_type_label,
+      requiredCapability:
+        requestTypesResult.data?.find(
+          (type: any) => type.id === row.request_type,
+        )?.capability ?? undefined,
       startsAt: row.starts_at,
       location: row.location,
       context: row.context ?? undefined,
@@ -200,16 +203,25 @@ export async function loadRemoteVillage(): Promise<RemoteVillageSnapshot | null>
       recipientIds: row.help_request_recipients.map(
         (item: any) => item.member_id,
       ),
+      recipientResponses: Object.fromEntries(
+        row.help_request_recipients.map((item: any) => [
+          item.member_id,
+          item.response,
+        ]),
+      ),
+      createdByMemberId: row.created_by,
       assignedMemberId: row.assigned_member_id ?? undefined,
       status: row.status,
     })),
     helpRequestTypes: sortHelpRequestTypes(
-      (requestTypesResult.data ?? []).map((row: any): HelpRequestType => ({
-        id: row.id,
-        label: row.label,
-        capability: row.capability ?? undefined,
-        isOther: row.is_other,
-      })),
+      (requestTypesResult.data ?? [])
+        .filter((row: any) => !row.archived_at)
+        .map((row: any): HelpRequestType => ({
+          id: row.id,
+          label: row.label,
+          capability: row.capability ?? undefined,
+          isOther: row.is_other,
+        })),
     ),
     handoffs: (handoffsResult.data ?? []).map((row: any) => ({
       id: row.id,
@@ -291,6 +303,19 @@ export async function createRemoteHelp(input: {
   });
   if (error) throw error;
 }
+export async function addRemoteHelpRecipients(
+  requestId: string,
+  recipientIds: string[],
+  operationId: string,
+) {
+  const { error } = await configured().rpc("add_help_request_recipients", {
+    p_request_id: requestId,
+    p_recipient_member_ids: recipientIds,
+    p_operation_id: operationId,
+  });
+  if (error) throw error;
+}
+
 export async function acceptRemoteHelp(id: string) {
   const { error } = await configured().rpc("accept_help_request", {
     p_request_id: id,
